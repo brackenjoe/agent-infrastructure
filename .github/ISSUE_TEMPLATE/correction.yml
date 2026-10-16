@@ -1,0 +1,32 @@
+name: Correction
+description: Something in the guide is wrong or out of date on your version
+labels: [correction]
+body:
+  - type: input
+    id: where
+    attributes:
+      label: Where
+      description: File and section, e.g. docs/network.md, SSH
+    validations:
+      required: true
+  - type: textarea
+    id: wrong
+    attributes:
+      label: What the guide says, and what is actually true
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Claude Code, Ubuntu, Tailscale, cloudflared or TAK Server, whichever applies
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Command and output, or the doc that says so
+      description: Paste the command you ran and what it printed, or link the vendor doc and its version. Remove addresses and hostnames first.
+      render: shell
+    validations:
+      required: true

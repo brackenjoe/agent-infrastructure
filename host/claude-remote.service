@@ -1,0 +1,19 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Bracken Systems LLC
+[Unit]
+Description=tmux session running Claude Code Remote Control
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+# Without this, stopping the unit SIGTERMs the whole cgroup, which includes the
+# tmux *server* this ExecStart spawned. That kills every tmux session on the
+# default socket, not just `main`. Measured: a single
+# `systemctl --user stop claude-remote` took down an unrelated attached session.
+# ExecStop below does the targeted teardown instead.
+KillMode=process
+ExecStart=/usr/bin/tmux new-session -d -s main %h/.local/bin/claude-remote-loop.sh
+ExecStop=/usr/bin/tmux kill-session -t main
+
+[Install]
+WantedBy=default.target

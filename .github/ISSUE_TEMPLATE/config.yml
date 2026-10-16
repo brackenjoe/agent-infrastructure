@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Your own variant, or a question
+    url: https://github.com/brackenjoe/agent-infrastructure/discussions
+    about: How you split the agents, or a rule you enforce differently
