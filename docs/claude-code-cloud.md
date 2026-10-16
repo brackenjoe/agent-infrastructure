@@ -60,4 +60,3 @@ Worth knowing, and worth telling them:
   session; a proxy attaches them.
 - Cloud sessions count toward the same usage limits as the rest of their
   Claude use.
-

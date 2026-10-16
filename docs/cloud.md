@@ -4,9 +4,10 @@ The simplest way to try this setup: no server, nothing to install. An AI
 walks you through it.
 
 **Before you start.** You need a paid plan for the tool. Claude Code in
-the cloud needs Claude Pro, Max, Team or Enterprise. Codex in the cloud is
-OpenAI's; check its own pages. Use the product guide for setup. Claude Code installs its starter agents;
-Codex writes project instructions in AGENTS.md.
+the cloud needs Claude Pro, Max, Team or Enterprise. Codex in the cloud
+needs a ChatGPT plan that includes Codex; check OpenAI's pages. Claude
+Code installs its starter agents; Codex writes project instructions in
+AGENTS.md.
 
 ## For you: three steps
 
@@ -20,8 +21,9 @@ Codex writes project instructions in AGENTS.md.
    > and walk me through setting it up, one step at a time.
 
 It will ask which tool you want, help you make a repository, connect it,
-and start your first cloud session. That session installs the Claude Code starter or writes Codex project
-instructions, depending on the tool you chose.
+and start your first cloud session. That session installs the Claude Code
+starter or writes Codex project instructions, depending on the tool you
+chose.
 
 This page gives your AI instructions. It is pinned to version `v2`;
 changes go to a new version, not into this one. Skim it first, it is
@@ -55,7 +57,8 @@ Every link below is the exact URL to open.
 
 1. Ask which tool they want: **Claude Code** in the cloud, or **Codex** in
    the cloud. If they are unsure, ask which AI subscription they already
-   pay for. Explain that Codex uses AGENTS.md rather than the Claude Code starter.
+   pay for. Explain that Codex uses AGENTS.md rather than the Claude Code
+   starter.
 2. Have them make a new **private** repository on GitHub
    ([github.com/new](https://github.com/new)) with a short name, and tick
    **Add a README file**, so the repository starts with a main branch.
@@ -75,7 +78,8 @@ The Phase 2 prompt, for the person to paste:
 
 You are now the coding agent, in the person's new repository. For Codex,
 read https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/v2/docs/codex-cloud.md
-and follow its "Phase 2: inside the Codex cloud task" section. Do not install
+and follow its "Phase 2: inside the Codex cloud task" section. Do not
+install
 the Claude Code starter. The remaining steps here cover Claude Code only.
 
 1. Download each file byte for byte with `curl -fsSL <url> -o <path>`, not
@@ -95,7 +99,8 @@ the Claude Code starter. The remaining steps here cover Claude Code only.
    contain only `agent` and `permissions.ask`. If it has `hooks`, `allow`,
    `env` or any other key, stop and tell them something changed upstream.
 3. Ask the person three questions, one at a time, and write the answers
-   into the "This project" section of `CLAUDE.md`: what the project is; how
+   into the "This project" section of `CLAUDE.md`: what the project is;
+how
    to check work (a command, or "nothing yet"); what needs their approval
    before it happens.
 4. Commit on a branch and push it. Tell the person to open the changes
@@ -104,18 +109,21 @@ the Claude Code starter. The remaining steps here cover Claude Code only.
    merge.
 5. Tell them to start a **new** cloud session on the repository and ask:
    "Which agent are you, and how do you route work?" It should answer that
-   it is `manager`, reviews each request, and sends code to `builder`. Then
+   it is `manager`, reviews each request, and sends code to `builder`.
+Then
    ask it for a one-line change to README.md, and check that it pushes a
-   branch and that **Create PR** appears. If either fails, the settings did
-   not load or the session lost its push step: check `.claude/settings.json`
+   branch and that **Create PR** appears. If either fails, the settings
+did
+   not load or the session lost its push step: check
+`.claude/settings.json`
    is on the default branch, and tell them to report it as an issue on the
    guide.
 6. Suggest a small first task with a design step and a code step, and tell
-   them to read the brief the manager writes and the builder's report. That
+   them to read the brief the manager writes and the builder's report.
+That
    is the pattern working.
 
 Then point them at the guide's README,
 https://github.com/brackenjoe/agent-infrastructure/blob/v2/README.md, for
 what to add next: a domain agent when an area keeps coming back, and the
 checks in `tools/`.
-

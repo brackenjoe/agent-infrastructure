@@ -263,4 +263,3 @@ Code is [MIT](LICENSE-CODE): `tools/`, `host/` and
 `setup/.claude/settings.json`. `starter/` is [MIT-0](starter/LICENSE): copy
 it into your own repository with no notice owed. Everything else, the prose and the agent and
 rule files included, is [CC BY 4.0](LICENSE). Bracken Systems LLC, 2026.
-
