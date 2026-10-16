@@ -28,7 +28,7 @@ the live ones.
 **New to this? [Set it up in the cloud](https://github.com/brackenjoe/agent-infrastructure/blob/v2/docs/cloud.md).**
 No server: make a GitHub account, point the AI you already use at that
 page, and it walks you through Claude Code in the cloud with a manager, a
-builder and a short rule set, or through [Codex Cloud](docs/codex-cloud.md)
+builder and a short rule set, or through [Codex in the cloud](docs/codex-cloud.md)
 with project instructions in AGENTS.md.
 
 **Read in this order:** the diagram and agents below, then
@@ -212,7 +212,7 @@ you at the keyboard.
 
 | Doc | Covers |
 |---|---|
-| [Set it up in the cloud](docs/cloud.md) | the no-server path: an AI walks a newcomer through it, with [Claude Code](docs/claude-code-cloud.md) or [Codex Cloud](docs/codex-cloud.md) |
+| [Set it up in the cloud](docs/cloud.md) | the no-server path: an AI walks a newcomer through it, with [Claude Code](docs/claude-code-cloud.md) or [Codex](docs/codex-cloud.md) |
 | [The agent server](docs/agent-server.md) | Ubuntu on LVM, Remote Control at boot, config capture, imaging, what broke |
 | [Software on the agent server](docs/software.md) | what each agent uses, where it came from, and what stays off a headless box |
 | [Network and access](docs/network.md) | Tailscale grants, one-way SSH deploy keys |

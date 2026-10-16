@@ -66,8 +66,9 @@ Every link below is the exact URL to open.
    - Claude Code: https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/v2/docs/claude-code-cloud.md
    - Codex: https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/v2/docs/codex-cloud.md
 4. The product steps end with the person pasting the Phase 2 prompt as the
-   first message of a cloud session on the new repository. Your part ends
-   there, unless they come back with a question.
+   first message of a cloud session on the new repository (for Codex, a
+   new task in the published environment). Your part ends there, unless
+   they come back with a question.
 
 The Phase 2 prompt, for the person to paste:
 
@@ -79,8 +80,8 @@ The Phase 2 prompt, for the person to paste:
 You are now the coding agent, in the person's new repository. For Codex,
 read https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/v2/docs/codex-cloud.md
 and follow its "Phase 2: inside the Codex cloud task" section. Do not
-install
-the Claude Code starter. The remaining steps here cover Claude Code only.
+install the Claude Code starter. The remaining steps here cover Claude
+Code only.
 
 1. Download each file byte for byte with `curl -fsSL <url> -o <path>`, not
    with a web-fetch tool that summarises, into these paths at the
@@ -100,9 +101,8 @@ the Claude Code starter. The remaining steps here cover Claude Code only.
    `env` or any other key, stop and tell them something changed upstream.
 3. Ask the person three questions, one at a time, and write the answers
    into the "This project" section of `CLAUDE.md`: what the project is;
-how
-   to check work (a command, or "nothing yet"); what needs their approval
-   before it happens.
+   how to check work (a command, or "nothing yet"); what needs their
+   approval before it happens.
 4. Commit on a branch and push it. Tell the person to open the changes
    with the diff indicator, select **Create PR**, then merge the pull
    request on GitHub. The files take effect in sessions started after the
@@ -110,18 +110,14 @@ how
 5. Tell them to start a **new** cloud session on the repository and ask:
    "Which agent are you, and how do you route work?" It should answer that
    it is `manager`, reviews each request, and sends code to `builder`.
-Then
-   ask it for a one-line change to README.md, and check that it pushes a
-   branch and that **Create PR** appears. If either fails, the settings
-did
-   not load or the session lost its push step: check
-`.claude/settings.json`
-   is on the default branch, and tell them to report it as an issue on the
-   guide.
+   Then ask it for a one-line change to README.md, and check that it
+   pushes a branch and that **Create PR** appears. If either fails, the
+   settings did not load or the session lost its push step: check
+   `.claude/settings.json` is on the default branch, and tell them to
+   report it as an issue on the guide.
 6. Suggest a small first task with a design step and a code step, and tell
    them to read the brief the manager writes and the builder's report.
-That
-   is the pattern working.
+   That is the pattern working.
 
 Then point them at the guide's README,
 https://github.com/brackenjoe/agent-infrastructure/blob/v2/README.md, for

@@ -36,8 +36,7 @@ Before publishing, have the person turn on **Allow Codex to access
 internet**, choose **Custom domains only**, and add
 `raw.githubusercontent.com` under **Additional allowed domains**. Phase 2
 needs that host to read this guide. Add package domains only if the
-project needs them. Have the person review the setup, save and publish.
-Wait for **Environment published** before selecting **Start a new task**.
+project needs them. Have the person review the setup and save.
 
 ### 3. Explain the network boundary
 
@@ -51,10 +50,8 @@ explains these risks in its
 That page is labelled Legacy; use the current environment guide for
 settings.
 
-Preserve configured proxies, certificate trust and TLS verification. If
-a request fails, report the destination and error without exposing
-credentials. On an Enterprise workspace, network rules are set by an
-admin; do not ask for broader access, tell the person what failed.
+On an Enterprise workspace, network rules are set by an admin; do not
+ask for broader access, tell the person what failed.
 
 ### 4. Hand authentication to the person
 
@@ -69,8 +66,10 @@ tracked file or a command you will print.
 Private networks are out of scope here; see OpenAI's
 [Private networking (VPN) section](https://learn.chatgpt.com/docs/environments/cloud-environments#private-networking-vpn).
 
-After **Environment published**, have the person select **Start a new
-task** and paste the Phase 2 prompt from
+When sections 2 to 4 are done, have the person save, select **Publish**
+(or **Republish** if already published), and wait for **Environment
+published**. Then have them select **Start a new task** and paste the
+Phase 2 prompt from
 https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/v2/docs/cloud.md
 as the first message. That prompt includes "Rules, for every step" and
 routes Codex to the section below. Your guiding-chat role ends there
@@ -81,8 +80,10 @@ unless they return with a question.
 You are now the coding agent in the person's new repository. Follow
 "Rules, for every step" from
 https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/v2/docs/cloud.md.
-Each cloud task has its own workspace. Do not install this repo's host
-boot services or Claude-specific starter files.
+Each cloud task has its own workspace. Do not install this guide's host
+boot services or Claude-specific starter files. Preserve configured
+proxies, certificate trust and TLS verification. If a request fails,
+report the destination and error without exposing credentials.
 
 ### 5. Write the project instructions
 
@@ -113,7 +114,9 @@ before reporting them as passed. State limitations plainly.
 
 Tell the person to review the diff, open a pull request from the task,
 and merge it on GitHub. AGENTS.md takes effect in tasks started after
-the merge.
+the merge. Tell the person they can now remove `raw.githubusercontent.com`
+from the environment's allowed domains and republish: it serves any
+public GitHub content.
 
 After the merge, have them start a new task from the updated default
 branch. Ask it to explain the project's scope, check command and approval
