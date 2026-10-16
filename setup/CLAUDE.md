@@ -2,6 +2,11 @@
 Headless Ubuntu 24.04 sandbox, driven from a phone or a second laptop.
 Nobody sits at it. It is disposable: rebuilding costs an afternoon.
 
+In a cloud session (hostname not brackenclaudebox) none of that is here:
+no tailnet, hosts, deploy keys, venvs, ArduPilot trees or flight logs.
+Do no deploys and no ssh; a step that needs the box goes in the job's
+README under "Not done". Work lands on the session's branch; I merge.
+
 ## Where things live, and which to read
 Everything is under ~/bracken. $HOME holds dotfiles and nothing else.
 

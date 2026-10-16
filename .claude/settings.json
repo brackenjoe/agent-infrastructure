@@ -1,0 +1,9 @@
+{
+  "attribution": {
+    "sessionUrl": false
+  },
+  "claudeMdExcludes": [
+    "**/setup/CLAUDE.md",
+    "**/starter/CLAUDE.md"
+  ]
+}

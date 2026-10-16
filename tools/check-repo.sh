@@ -12,6 +12,10 @@
 #
 #   tools/check-repo.sh
 #
+# The two host checks (system capture, $HOME) run only on the box named by
+# CHECK_REPO_BOX (default brackenclaudebox) and print skip elsewhere, so a
+# cloud session on a fresh VM is not failed by a machine it is not on.
+#
 # What it checks, each against the rule it enforces:
 #   tools index    every tracked entry directly under tools/ is named in
 #                  tools/README.md                       (CLAUDE.md, tools)
@@ -38,6 +42,9 @@ cd "$ROOT" || exit 2
 fail=0
 FAIL() { echo "FAIL  $*"; fail=1; }
 OK()   { echo "ok    $*"; }
+SKIP() { echo "skip  $*"; }
+BOX="${CHECK_REPO_BOX:-brackenclaudebox}"
+ONBOX=0; [ "$(hostname)" = "$BOX" ] && ONBOX=1
 
 # tools index
 missing=()
@@ -94,22 +101,30 @@ git worktree list --porcelain | awk '/^worktree /{print $2}' | while read -r w; 
 done | tee "$wt" ; grep -q FAIL "$wt" && fail=1; rm -f "$wt"
 OK "worktrees checked"
 
-# system capture
-drift=()
-while IFS= read -r f; do
-  rel="${f#system/files/}"; live="/$rel"
-  [ -r "$live" ] || { drift+=("$live (unreadable here)"); continue; }
-  cmp -s "$f" "$live" || drift+=("$live")
-done < <(git ls-files system/files)
-[ ${#drift[@]} -eq 0 ] && OK "system/ capture matches the live files" \
-  || FAIL "system/ capture is stale for: ${drift[*]}; run tools/capture-system-config.sh"
+# system capture (host check: only on the box)
+if [ "$ONBOX" -eq 1 ]; then
+  drift=()
+  while IFS= read -r f; do
+    rel="${f#system/files/}"; live="/$rel"
+    [ -r "$live" ] || { drift+=("$live (unreadable here)"); continue; }
+    cmp -s "$f" "$live" || drift+=("$live")
+  done < <(git ls-files system/files)
+  [ ${#drift[@]} -eq 0 ] && OK "system/ capture matches the live files" \
+    || FAIL "system/ capture is stale for: ${drift[*]}; run tools/capture-system-config.sh"
+else
+  SKIP "system/ capture: not on $BOX"
+fi
 
-# $HOME
-# the main checkout's name, also from a worktree
-MAIN=$(basename "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")")
-stray=$(find "$HOME" -maxdepth 1 -mindepth 1 ! -name '.*' ! -name "$MAIN" -printf '%f ')
-[ -z "$stray" ] && OK "\$HOME holds only dotfiles and $MAIN/" \
-  || FAIL "loose entries in \$HOME: $stray"
+# $HOME (host check: only on the box)
+if [ "$ONBOX" -eq 1 ]; then
+  # the main checkout's name, also from a worktree
+  MAIN=$(basename "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")")
+  stray=$(find "$HOME" -maxdepth 1 -mindepth 1 ! -name '.*' ! -name "$MAIN" -printf '%f ')
+  [ -z "$stray" ] && OK "\$HOME holds only dotfiles and $MAIN/" \
+    || FAIL "loose entries in \$HOME: $stray"
+else
+  SKIP "\$HOME: not on $BOX"
+fi
 
 # repo root
 # Untracked, non-ignored entries directly at the root: top-level files, and

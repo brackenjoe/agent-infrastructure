@@ -15,6 +15,8 @@
 # public-scan.deny beside this script) is a term, matched case-insensitively
 # as a fixed whole word. A missing file is skipped, so a public copy of this
 # script runs without one. The terms are never printed except as matched lines.
+# $PUBLIC_SCAN_TERMS adds terms, comma or newline separated, for environments
+# where a deny file cannot be kept (e.g. a cloud environment variable).
 
 set -u
 dir="${1:-}"
@@ -59,16 +61,20 @@ while IFS='|' read -r label rx rest; do
 done <<< "$patterns"
 
 deny="${PUBLIC_SCAN_DENY:-$(dirname "$0")/public-scan.deny}"
+terms=$(mktemp) && trap 'rm -f "$terms"' EXIT
 if [ -f "$deny" ]; then
-  terms=$(mktemp) && trap 'rm -f "$terms"' EXIT
-  grep -v -e '^[[:space:]]*#' -e '^[[:space:]]*$' "$deny" > "$terms"
-  if [ -s "$terms" ]; then
-    out=$(printf '%s\n' "$files" | tr '\n' '\0' | xargs -0 grep -HnIiwF -f "$terms" -- 2>/dev/null)
-    if [ -n "$out" ]; then
-      hits=1
-      echo "FAIL  deny-list term"
-      printf '%s\n' "$out" | sed 's/^/      /'
-    fi
+  grep -v -e '^[[:space:]]*#' -e '^[[:space:]]*$' "$deny" >> "$terms"
+fi
+if [ -n "${PUBLIC_SCAN_TERMS:-}" ]; then
+  printf '%s\n' "$PUBLIC_SCAN_TERMS" | tr ',' '\n' \
+    | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' | grep -v '^$' >> "$terms"
+fi
+if [ -s "$terms" ]; then
+  out=$(printf '%s\n' "$files" | tr '\n' '\0' | xargs -0 grep -HnIiwF -f "$terms" -- 2>/dev/null)
+  if [ -n "$out" ]; then
+    hits=1
+    echo "FAIL  deny-list term"
+    printf '%s\n' "$out" | sed 's/^/      /'
   fi
 fi
 

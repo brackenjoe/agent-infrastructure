@@ -232,11 +232,16 @@ you at the keyboard.
     tools/public-scan.sh          scan a directory before you push it anywhere public
     tools/check-repo.sh           example: the repo's own rules, checked by script
     tools/check-permissions.sh    check the agent-file ask rule still holds, in a throwaway repo
+    tools/publish-from-dev.sh     publish from the private working repo: scan, show, push only with --push
     LICENSE, LICENSE-CODE         CC BY 4.0 for text, MIT for code (starter/LICENSE: MIT-0)
     CONTRIBUTING.md, SECURITY.md  how to contribute; how to report a security problem
+    AGENTS.md, CLAUDE.md          the rules any agent follows when editing this repo (CLAUDE.md imports AGENTS.md)
+    .claude/settings.json         for sessions on this repo: no session links in commits; setup/ and starter/ rules not loaded
+    MAINTAINING.md                how the owner edits from cloud sessions and publishes
 
-The `setup/` files are copied unedited from the live repo, so they use its
-real names. In this guide:
+The `setup/` and `tools/` files are copied unedited from the live repo at
+each publish (edit them there, not here), so they use its real names. In
+this guide:
 
 | In `setup/` | In this guide |
 |---|---|

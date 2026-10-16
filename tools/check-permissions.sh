@@ -10,9 +10,10 @@
 #
 # Needs GNU `timeout` (on macOS, `gtimeout` from coreutils) and python3.
 #
-# Settings under test: $PERMCHECK_SETTINGS if set, else $ROOT/.claude/settings.json,
-# else $ROOT/setup/.claude/settings.json (the layout of the public repo this
-# script ships in). The file used is printed. Only its "permissions" object is
+# Settings under test: $PERMCHECK_SETTINGS if set, else
+# $ROOT/setup/.claude/settings.json when it exists (the public repo this
+# script ships in, whose own root .claude/settings.json carries no
+# permissions), else $ROOT/.claude/settings.json. The file used is printed. Only its "permissions" object is
 # used; every other key (agent, notifications) is dropped, since the probe repo
 # has no manager.md.
 #
@@ -69,10 +70,10 @@ RUN_TIMEOUT="${PERMCHECK_TIMEOUT:-180}"
 
 if [ -n "${PERMCHECK_SETTINGS:-}" ]; then
   SETTINGS="$PERMCHECK_SETTINGS"
-elif [ -f "$ROOT/.claude/settings.json" ]; then
-  SETTINGS="$ROOT/.claude/settings.json"
-else
+elif [ -f "$ROOT/setup/.claude/settings.json" ]; then
   SETTINGS="$ROOT/setup/.claude/settings.json"
+else
+  SETTINGS="$ROOT/.claude/settings.json"
 fi
 [ -f "$SETTINGS" ] || { echo "settings not found: $SETTINGS" >&2; exit 2; }
 command -v python3 >/dev/null || { echo "python3 not found" >&2; exit 2; }

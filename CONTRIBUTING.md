@@ -16,9 +16,9 @@ are the ones that make it more correct or easier to copy.
 
 **Out of scope**
 
-- Edits to `setup/`. Those files are copied from the live repo on each
-  publish, so a change made only here is overwritten. Open an issue and it
-  goes into the live file instead.
+- Edits to `setup/` or `tools/`. Those files are copied from the live
+  repo on each publish, so a change made only here is overwritten. Open an
+  issue and it goes into the live file instead.
 - Rewording for style alone.
 
 **Before a pull request**
