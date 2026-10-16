@@ -1,0 +1,8 @@
+{
+  "agent": "manager",
+  "permissions": {
+    "ask": [
+      "Edit(**/.claude/agents/**)"
+    ]
+  }
+}

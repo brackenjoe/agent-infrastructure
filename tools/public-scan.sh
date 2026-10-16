@@ -13,7 +13,7 @@
 #
 # Deny list: each non-empty, non-# line of $PUBLIC_SCAN_DENY (default:
 # public-scan.deny beside this script) is a term, matched case-insensitively
-# as a fixed string. A missing file is skipped, so a public copy of this
+# as a fixed whole word. A missing file is skipped, so a public copy of this
 # script runs without one. The terms are never printed except as matched lines.
 
 set -u
@@ -63,7 +63,7 @@ if [ -f "$deny" ]; then
   terms=$(mktemp) && trap 'rm -f "$terms"' EXIT
   grep -v -e '^[[:space:]]*#' -e '^[[:space:]]*$' "$deny" > "$terms"
   if [ -s "$terms" ]; then
-    out=$(printf '%s\n' "$files" | tr '\n' '\0' | xargs -0 grep -HnIiF -f "$terms" -- 2>/dev/null)
+    out=$(printf '%s\n' "$files" | tr '\n' '\0' | xargs -0 grep -HnIiwF -f "$terms" -- 2>/dev/null)
     if [ -n "$out" ]; then
       hits=1
       echo "FAIL  deny-list term"

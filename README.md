@@ -25,6 +25,12 @@ the live ones.
 - **Every rule has a failure behind it.** [Twelve incidents](docs/incidents.md)
   and the rule each one produced.
 
+**New to this? [Set it up in the cloud](https://github.com/brackenjoe/agent-infrastructure/blob/v1/docs/cloud.md).**
+No server: make a GitHub account, point the AI you already use at that
+page, and it walks you through Claude Code in the cloud with a manager, a
+builder and a short rule set. Codex can be connected the same way; its
+starter files are not written yet.
+
 **Read in this order:** the diagram and agents below, then
 [How a task flows](#how-a-task-flows) and
 [what enforces which rule](#the-rules-and-what-enforces-them). To try it,
@@ -206,6 +212,7 @@ you at the keyboard.
 
 | Doc | Covers |
 |---|---|
+| [Set it up in the cloud](docs/cloud.md) | the no-server path: an AI walks a newcomer through it, with [Claude Code](docs/claude-code-cloud.md) now and Codex to come |
 | [The agent server](docs/agent-server.md) | Ubuntu on LVM, Remote Control at boot, config capture, imaging, what broke |
 | [Software on the agent server](docs/software.md) | what each agent uses, where it came from, and what stays off a headless box |
 | [Network and access](docs/network.md) | Tailscale grants, one-way SSH deploy keys |
@@ -219,12 +226,13 @@ you at the keyboard.
     setup/.claude/agents/*.md     the ten agents: manager, builder, and eight domain agents
     setup/.claude/settings.json   the session default and the spawn and edit permissions
     host/                         the agent server's unit, loop script, shell function and drop-ins
+    starter/                      the trimmed manager, builder, rules and settings the cloud setup installs
     examples/                     a real builder brief and report; skeletons of the files setup/ points at
     docs/                         the agent server, software, network, web server and TAK, in full
     tools/public-scan.sh          scan a directory before you push it anywhere public
     tools/check-repo.sh           example: the repo's own rules, checked by script
     tools/check-permissions.sh    check the agent-file ask rule still holds, in a throwaway repo
-    LICENSE, LICENSE-CODE         CC BY 4.0 for text, MIT for code
+    LICENSE, LICENSE-CODE         CC BY 4.0 for text, MIT for code (starter/LICENSE: MIT-0)
     CONTRIBUTING.md, SECURITY.md  how to contribute; how to report a security problem
 
 The `setup/` files are copied unedited from the live repo, so they use its
@@ -252,5 +260,6 @@ questions go in Discussions, and security problems to
 [SECURITY.md](SECURITY.md), not an issue.
 
 Code is [MIT](LICENSE-CODE): `tools/`, `host/` and
-`setup/.claude/settings.json`. Everything else, the prose and the agent and
+`setup/.claude/settings.json`. `starter/` is [MIT-0](starter/LICENSE): copy
+it into your own repository with no notice owed. Everything else, the prose and the agent and
 rule files included, is [CC BY 4.0](LICENSE). Bracken Systems LLC, 2026.

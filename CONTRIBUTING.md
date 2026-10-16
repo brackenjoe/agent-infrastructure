@@ -27,5 +27,5 @@ are the ones that make it more correct or easier to copy.
   hostnames you did not mean to publish, or credentials.
 - No em dashes; the prose style is short declarative sentences.
 - Contributions are accepted under the licence of the file you change:
-  MIT for `tools/`, `host/` and `setup/.claude/settings.json`, CC BY 4.0
+  MIT for `tools/`, `host/` and `setup/.claude/settings.json`, MIT-0 for `starter/`, CC BY 4.0
   for everything else.
