@@ -107,12 +107,26 @@ enforced by something other than the model:
 
 | Rule | Enforced by | Limits |
 |---|---|---|
-| Creating or editing an agent file asks you first | the ask rule `Edit(**/.claude/agents/**)` in `.claude/settings.json` | Ask rules prompt in every mode, `bypassPermissions` included. The `**/` prefix covers worktree copies; without it a two-folder pattern matches only where the session starts. Covers Claude Code's file tools, not a script that writes the file itself. Spawning an agent never prompts: `Agent(...)` allow rules do nothing, and auto mode drops them |
+| Creating or editing an agent file asks you first | the ask rule `Edit(**/.claude/agents/**)` in `.claude/settings.json` | Holds in every mode; see below the table. Covers Claude Code's file tools, not a script that writes the file itself. Spawning an agent never prompts: `Agent(...)` allow rules do nothing, and auto mode drops them |
 | The builder cannot spawn agents | `disallowedTools: Agent` in its frontmatter | |
 | The agent server cannot reach the TAK server | Tailscale access rules | The web server can, and agents deploy to it with sudo; that path is closed only by the stop rule |
 | Deploy targets hold no key back to the agent server | SSH: no key installed on the targets | |
 | Repo layout, index, links and stale worktrees | `tools/check-repo.sh` | only when run |
 | No addresses, network names, private terms or credentials in a public push | `tools/public-scan.sh` | only when run; does not replace reading the diff |
+
+**Why the agent-file rule exists when Claude Code already protects
+`.claude/`.** Without it, that built-in protection prompts in manual and
+acceptEdits (with an option to allow the whole folder for the session),
+leaves the write to the classifier in auto mode, denies it in dontAsk and
+allows it in bypassPermissions
+([permission modes](https://code.claude.com/docs/en/permission-modes),
+Protected paths). Measured here on 2.1.289, headless with no rules, it
+refused agent files both at the root and inside a git worktree under
+`.claude/worktrees/`. The ask rule prompts in every mode, so auto and
+bypass sessions ask too; in a `-p` run with nobody to answer, it is
+denied. Keep the `**/` prefix: `Edit(.claude/agents/**)` matches only
+where the session starts and let a worktree copy through in bypass mode.
+`tools/check-permissions.sh` repeats the bypass case on your version.
 
 Everything else (review before brief, verify by exercising, stop before
 credentials or the network's entry points, approval for every public push)
@@ -181,9 +195,12 @@ you at the keyboard.
    committed, and checked out over the real directory it deletes it. Run the
    main checkout's interpreter by absolute path instead.
 7. **Check what a script can check.** Adapt `tools/check-repo.sh` to your
-   layout and make "the check passes" part of finishing a job. Before any
-   push to a public remote, run `tools/public-scan.sh <dir>` and read the
-   diff anyway.
+   layout and make "the check passes" part of finishing a job. Run
+   `tools/check-permissions.sh` after each Claude Code update: in a
+   throwaway repo, it checks that the agent-file ask rule still stops an
+   edit at the root and in a worktree copy. Before any push to a public
+   remote, run `tools/public-scan.sh <dir>`, have an agent with none of the
+   drafting context review new prose read-only, and read the diff anyway.
 
 ## The full build
 
@@ -206,6 +223,7 @@ you at the keyboard.
     docs/                         the agent server, software, network, web server and TAK, in full
     tools/public-scan.sh          scan a directory before you push it anywhere public
     tools/check-repo.sh           example: the repo's own rules, checked by script
+    tools/check-permissions.sh    check the agent-file ask rule still holds, in a throwaway repo
     LICENSE, LICENSE-CODE         CC BY 4.0 for text, MIT for code
     CONTRIBUTING.md, SECURITY.md  how to contribute; how to report a security problem
 

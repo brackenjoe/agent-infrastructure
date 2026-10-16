@@ -29,6 +29,8 @@
 #   system capture every file under system/files/ matches the live file it
 #                  was copied from                         (system/README.md)
 #   $HOME          holds dotfiles and the repo and nothing else (CLAUDE.md)
+#   repo root      nothing untracked sits at the top of the repo; scratch
+#                  files go in a scratch directory         (CLAUDE.md, Scope)
 set -uo pipefail
 shopt -s nullglob
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -103,8 +105,18 @@ done < <(git ls-files system/files)
   || FAIL "system/ capture is stale for: ${drift[*]}; run tools/capture-system-config.sh"
 
 # $HOME
-stray=$(find "$HOME" -maxdepth 1 -mindepth 1 ! -name '.*' ! -name "$(basename "$ROOT")" -printf '%f ')
-[ -z "$stray" ] && OK "\$HOME holds only dotfiles and $(basename "$ROOT")/" \
+# the main checkout's name, also from a worktree
+MAIN=$(basename "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")")
+stray=$(find "$HOME" -maxdepth 1 -mindepth 1 ! -name '.*' ! -name "$MAIN" -printf '%f ')
+[ -z "$stray" ] && OK "\$HOME holds only dotfiles and $MAIN/" \
   || FAIL "loose entries in \$HOME: $stray"
+
+# repo root
+# Untracked, non-ignored entries directly at the root: top-level files, and
+# top-level directories (listed once, with a trailing slash). Deeper paths
+# have a slash before the end and are other checks' business.
+loose=$(git ls-files --others --exclude-standard --directory | grep -Ev '/.' | tr '\n' ' ')
+[ -z "$loose" ] && OK "nothing untracked at the repo root" \
+  || FAIL "untracked entries at the repo root: ${loose% }; delete them or move them to a scratch directory"
 
 exit $fail

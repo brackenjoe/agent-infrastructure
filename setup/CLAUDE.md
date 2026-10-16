@@ -64,7 +64,9 @@ third-party tree: say what and why first. A design I am doing in another
 session gets no derived work here until I say it is settled.
 
 A new script is either reusable, committed in tools/ and indexed, or a
-one-shot deleted once it has run.
+one-shot deleted once it has run. Every agent starts in the shared
+checkout: run anything that writes to the current directory from a
+scratch directory. Nothing untracked is left at the repo root.
 
 ## Delegating
 Code to a settled design goes to `builder`, from every agent, the manager
@@ -101,7 +103,8 @@ The same stop rule covers brackenwebserver (`ssh webhost`), its ufw rules
 and tunnel config. Its record is work/web-apps/web-server/README.md; after
 touching its /etc, run tools/capture-webhost-config.sh and commit.
 
-Verify by exercising the thing, not by seeing that it started.
+Verify by exercising the thing, not by seeing that it started. Permission
+rules too: after a Claude Code update, run tools/check-permissions.sh.
 
 ## Pushing
 Push to a private remote as part of finishing; don't ask. A public remote
@@ -111,4 +114,7 @@ visibility, don't assume it (gh is not installed):
   curl -s -o /dev/null -w '%{http_code}\n' https://api.github.com/repos/<owner>/<repo>
 
 404 is private or nonexistent, 200 public. Either way, read the diff for
-credentials first; the exclusion list is in system/README.md.
+credentials first; the exclusion list is in system/README.md. New or
+rewritten public prose gets a read-only review, before the push, by an
+agent with none of the drafting context; its findings are checked like
+any report.
