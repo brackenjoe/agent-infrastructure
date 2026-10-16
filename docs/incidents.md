@@ -1,13 +1,16 @@
 # Incidents, and the rules they produced
 
 [Back to the README](../README.md). Most rules in [`setup/`](../setup/) exist
-because something went wrong first. These are the twelve that produced a
-rule, from six weeks of running this setup (September and October 2026),
-newest first. Security details are left out; the rule each one produced is
-in the live files.
+because something went wrong first. These are fourteen that produced a
+rule and one that has not yet, from six weeks of running this setup
+(September and October 2026), newest first. Security details are left
+out; the rule each one produced is in the live files.
 
 | Date | What went wrong | How it was caught | Rule now |
 |---|---|---|---|
+| 2026-10-16 | A builder's test commit, titled "feat" and adding a one-line file named `f`, landed in the guide's source folder in the private repo. The builder is told never to commit; that is an instruction, not a permission. | Reading the publish stage before the push. Reverted; never public. | None yet. The instruction stands, and the publish step shows every file for the owner to read before anything is pushed. |
+| 2026-10-16 | The first version of `tools/check-permissions.sh` could report a pass with no evidence that anything had been refused. The revision that fixed it claimed, from the docs' protected-paths list, that the built-in protection skips agent files in worktree copies. Measured on 2.1.289, it refuses them. | A read-only review by an agent with none of the drafting context, in two passes, before the push | The script needs a recorded denial and a negative control, or it reports inconclusive. The worktree claim was measured and corrected, and `tools/check-permissions.sh` runs after every Claude Code update. |
+| 2026-10-16 | The published enforcement table, written from reading the docs, was wrong three ways. It said spawning an unlisted agent asks first: `Agent(...)` allow rules do nothing, and spawning never prompts. It said `bypassPermissions` skips ask rules: they hold. It said `Edit(.claude/agents/**)` matches at any depth: it matched only where the session starts, and let a worktree copy through in bypass mode. | A cold review by an agent with none of the drafting context; its findings checked against the [permissions](https://code.claude.com/docs/en/permissions) and [permission modes](https://code.claude.com/docs/en/permission-modes) docs, read 2026-10-16 | The ask rule is `Edit(**/.claude/agents/**)`, and `tools/check-permissions.sh` measures it after each Claude Code update. New or rewritten public prose gets a read-only review by an agent with none of the drafting context before the push. |
 | 2026-10-03 | The manager briefed domain agents (Opus) to "build X to the contract" instead of routing code to the cheaper builder. Four direction-finding builds ran 450 to 680 turns each: about a quarter of two weeks' subagent usage (an estimate, weighting turns by model), against 5.5% for the builder. | A review of 14 days of transcripts | Code to a settled design goes to `builder` from every agent; a report names each builder brief or says why there was none. |
 | 2026-09-28 | Requests were turned straight into briefs. A 20 mm strap channel in a printed mount would have been briefed as asked, and the strap had nowhere to close. | Not recorded; the example suggests the manager's own review | Every request is reviewed against the source and the measured numbers, and answered approve or push back, before a brief. |
 | 2026-09-27 | An overnight review found two exposures in the RF sensor's software, and a closed-loop result that had been read from an agent's report, not rerun. | The manager, with a second model as reviewer | Both exposures fixed; review documents say which checks were rerun and which were read from records. |
@@ -21,16 +24,19 @@ in the live files.
 | 2026-09-17 | A design for pushing missions to TAK had six defects, among them a followed redirect that would resend the client certificate. | A second-model review | Eleven new self-tests; every failure path fails closed ([TAK integration](tak-integration.md#fail-closed)). |
 | 2026-09-04 | An afternoon on a recovery watchdog, for a hang the box had never had, produced four successive wrong conclusions. A service reading `active` was taken as evidence it worked; the box hard-hung three minutes after the watchdog was armed. | Measuring the watchdog's timer, which never moved | Verify by exercising the thing, not by seeing that it started; check the base rate before building a mitigation. |
 
-## Three patterns
+## Four patterns
 
 1. **A claim from reasoning or a single negative, not a measurement:** the
    reachability claim, the predicted audit findings, the watchdog, the
-   upgrade theory.
+   upgrade theory, the first enforcement table.
 2. **A check that existed but did not exercise the act:** the
    guarded-looking delete, the `active` service, the result read from a
-   report.
+   report, the permission check that could pass without a refusal.
 3. **Cost from routing, not capability:** the most expensive failure was not
    a wrong answer but the right work done by the wrong model.
+4. **An instruction, not a permission:** the builder's commit. The table of
+   [what enforces which rule](../README.md#the-rules-and-what-enforces-them)
+   is the short list of rules that are not like this.
 
 The cheap, bounded builders checked the stronger orchestrator more often
 than the reverse, because their file lists made them measure before they

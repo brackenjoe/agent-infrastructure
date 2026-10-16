@@ -22,8 +22,8 @@ the live ones.
 - **Instructions versus enforcement, stated.** A table says which rules the
   harness or the network enforces and which hold only as well as the model
   follows them.
-- **Every rule has a failure behind it.** [Twelve incidents](docs/incidents.md)
-  and the rule each one produced.
+- **Every rule has a failure behind it.** [Fifteen incidents](docs/incidents.md)
+  and the rule each one produced; one has none yet.
 
 **New to this? [Set it up in the cloud](https://github.com/brackenjoe/agent-infrastructure/blob/v2/docs/cloud.md).**
 No server: make a GitHub account, point the AI you already use at that
@@ -85,6 +85,10 @@ those rules, not the agents' good behaviour, decide what can reach what.
 other eight are this setup's domains: replace them with your own, one per
 area that keeps coming back.
 
+The manager runs at the session's model (`model: inherit`). The costly
+failure here was a routing error at that model, fixed by a rule rather than
+a model change (see below). A cheaper manager has not been tried.
+
 ## How a task flows
 
 1. You send a task from your phone or laptop. The manager reviews it against the
@@ -109,7 +113,11 @@ doing most of the code, took 5.5%.
 ## The rules, and what enforces them
 
 Most rules are instructions the model is trusted to follow. These are
-enforced by something other than the model:
+enforced by something other than the model. The Claude Code rows were
+checked against version 2.1.289 and the
+[permissions](https://code.claude.com/docs/en/permissions) and
+[permission modes](https://code.claude.com/docs/en/permission-modes) docs,
+read 2026-10-16.
 
 | Rule | Enforced by | Limits |
 |---|---|---|
@@ -137,33 +145,36 @@ where the session starts and let a worktree copy through in bypass mode.
 Everything else (review before brief, verify by exercising, stop before
 credentials or the network's entry points, approval for every public push)
 lives in `setup/CLAUDE.md` and the agent files, and holds only as well as
-the model follows it. Permission behaviour is from the
-[Claude Code permissions docs](https://code.claude.com/docs/en/permissions),
-checked against Claude Code 2.1.289 and the docs of 2026-10-16.
+the model follows it.
 
 ## Start small
 
 You do not need the servers, Tailscale or TAK to use the pattern. On any
 machine with Claude Code and a git repo:
 
-1. Copy `setup/.claude/agents/manager.md` and `builder.md` into your repo's
-   `.claude/agents/`. Replace "Joe" with your name and cut the worked
-   examples (the DF builds, the strap channel, Postflight's fixtures);
-   they are this setup's.
-2. Create `.claude/settings.json` with `{"agent": "manager", "permissions":
+1. Copy [`starter/`](starter/) into your repo: its `CLAUDE.md` at the root
+   and its `.claude/` beside it. It is the core with no domains in it: a
+   manager, a builder, a short rule set with the Delegating section, and
+   the settings below. Fill in the rule set's "This project" section.
+2. Its `.claude/settings.json` is `{"agent": "manager", "permissions":
    {"ask": ["Edit(**/.claude/agents/**)"]}}`. The `agent` setting makes
    `manager.md` the main session: its body replaces Claude Code's default
    system prompt, while `CLAUDE.md` still loads.
-3. Write a short `CLAUDE.md` with at least the Delegating section of
-   [`setup/CLAUDE.md`](setup/CLAUDE.md): what goes to `builder`, what a
-   brief contains, and that checks are rerun, never taken on its word.
+3. If several sessions share one checkout, add the worktree rule from
+   [Install the agents](#install-the-agents), step 6. The starter is what
+   the cloud setup installs, and it leaves the rule out: in an
+   Anthropic-hosted cloud environment each session runs in its own VM,
+   which clones the repository
+   ([Use Claude Code in the cloud](https://code.claude.com/docs/en/claude-code-on-the-web),
+   read 2026-10-16).
 4. Ask for something with a design step and a code step, and read the
    brief the manager writes. [`examples/brief-and-report.md`](examples/brief-and-report.md)
    is what a good one looks like.
 
-Add a domain agent when an area keeps coming back and has traps a new
-session would re-learn. Add the machines when you want it running without
-you at the keyboard.
+`setup/` is the full live set, with this setup's domains and worked
+examples in it. Add a domain agent when an area keeps coming back and has
+traps a new session would re-learn. Add the machines when you want it
+running without you at the keyboard.
 
 ## Install the agents
 
@@ -217,7 +228,7 @@ you at the keyboard.
 | [Software on the agent server](docs/software.md) | what each agent uses, where it came from, and what stays off a headless box |
 | [Network and access](docs/network.md) | Tailscale grants, one-way SSH deploy keys |
 | [The web server](docs/web-server.md) | loopback apps behind Cloudflare Tunnel and Access, ufw, deploy by push, the stop rule |
-| [Incidents](docs/incidents.md) | twelve failures in six weeks, how each was caught, and the rule it produced |
+| [Incidents](docs/incidents.md) | fifteen failures in six weeks, how each was caught, and the rule it produced, if any |
 | [TAK Server integration](docs/tak-integration.md) | mission packages and CoT to a TAK Server over mutual TLS, failing closed, testing without a server |
 
 ## What is in this repo
