@@ -1,6 +1,6 @@
 # Claude Code in the cloud
 
-Phase 1 of [Set it up in the cloud](https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/v4/docs/cloud.md), for Claude Code. Written
+Phase 1 of [Set it up in the cloud](https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/v5/docs/cloud.md), for Claude Code. Written
 for the AI guiding the person. Written against Anthropic's docs read on
 2026-10-16: [Get started with cloud sessions](https://code.claude.com/docs/en/web-quickstart)
 and [Configure cloud environments](https://code.claude.com/docs/en/cloud-environments).
@@ -39,7 +39,7 @@ If a screen differs, those pages win.
    anything, the safest way to watch a first run. Cloud sessions do not
    offer Manual or Bypass modes. Then paste, word for word, the Phase 2
    prompt from
-   https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/v4/docs/cloud.md
+   https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/v5/docs/cloud.md
    as the first message; the session starts when it is sent.
 6. **What they will see.** The session may ask to run `curl` to read the
    guide; approve it. Then a plan: approve it if it lists the four files

@@ -5,9 +5,11 @@ are the ones that make it more correct or easier to copy.
 
 **Welcome**
 
-- Corrections: a claim that is wrong on your Claude Code, Ubuntu, Tailscale,
-  Cloudflare or TAK Server version. Use the Correction issue template: the
-  version, the command and what it printed.
+- Corrections: a claim that is wrong on your Claude Code, Codex, Ubuntu,
+  Tailscale, Cloudflare or TAK Server version. Use the Correction issue
+  template: the version, the command and what it printed. Most of the
+  guide is written for Claude Code, so a correction from a Codex user is
+  especially useful.
 - Gaps: a step you had to work out yourself that the guide should have said.
 - Your own variant: how you split the domain agents, or a rule the harness
   can enforce that this setup leaves to instructions. Post it in

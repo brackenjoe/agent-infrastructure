@@ -4,7 +4,8 @@ The simplest way to try this setup: no server, nothing to install. An AI
 walks you through it.
 
 **Before you start.** You need a paid plan for the tool. Claude Code in
-the cloud needs Claude Pro, Max, Team or Enterprise. Codex in the cloud
+the cloud needs Claude Pro, Max or Team, or an Enterprise premium or
+Chat + Claude Code seat. Codex in the cloud
 needs a ChatGPT plan that includes Codex; check OpenAI's pages. Claude
 Code installs its starter agents; Codex writes project instructions in
 AGENTS.md.
@@ -17,7 +18,7 @@ AGENTS.md.
    or ChatGPT.
 3. **Paste this into it:**
 
-   > Read https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/v4/docs/cloud.md
+   > Read https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/v5/docs/cloud.md
    > and walk me through setting it up, one step at a time.
 
 It will ask which tool you want, help you make a repository, connect it,
@@ -25,7 +26,7 @@ and start your first cloud session. That session installs the Claude Code
 starter or writes Codex project instructions, depending on the tool you
 chose.
 
-This page gives your AI instructions. It is pinned to version `v4`;
+This page gives your AI instructions. It is pinned to version `v5`;
 changes go to a new version, not into this one. Skim it first, it is
 short. If your AI says it cannot open links, paste the text of this page
 and of the product page (`docs/claude-code-cloud.md` or
@@ -36,7 +37,7 @@ and of the product page (`docs/claude-code-cloud.md` or
 ## For the AI reading this
 
 You are guiding a person who may never have used GitHub or a coding agent.
-This is version `v4` of a public guide,
+This is version `v5` of a public guide,
 [agent-infrastructure](https://github.com/brackenjoe/agent-infrastructure).
 Every link below is the exact URL to open.
 
@@ -65,8 +66,8 @@ Every link below is the exact URL to open.
    repository starts with a main branch (GitHub, Quickstart for
    repositories, read 2026-10-17).
 3. Walk them through the product steps:
-   - Claude Code: https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/v4/docs/claude-code-cloud.md
-   - Codex: https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/v4/docs/codex-cloud.md
+   - Claude Code: https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/v5/docs/claude-code-cloud.md
+   - Codex: https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/v5/docs/codex-cloud.md
 4. The product steps end with the person pasting the Phase 2 prompt as the
    first message of a cloud session on the new repository (for Codex, a
    new task in the published environment). Your part ends there, unless
@@ -75,7 +76,7 @@ Every link below is the exact URL to open.
 The Phase 2 prompt. Give it to the person word for word, as one block to
 copy:
 
-> Run `curl -fsSL https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/v4/docs/cloud.md`
+> Run `curl -fsSL https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/v5/docs/cloud.md`
 > and follow its sections "Rules, for every step" and "Phase 2". If it
 > fails, show me the error and stop.
 
@@ -86,7 +87,7 @@ reference, WebFetch, read 2026-10-17).
 ### Phase 2: inside the cloud session
 
 You are now the coding agent, in the person's new repository. For Codex,
-run `curl -fsSL https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/v4/docs/codex-cloud.md`
+run `curl -fsSL https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/v5/docs/codex-cloud.md`
 and follow its "Phase 2: inside the Codex cloud task" section. Do not
 install the Claude Code starter. The remaining steps here cover Claude
 Code only.
@@ -103,10 +104,10 @@ Code only.
 
    | URL | Path |
    |---|---|
-   | https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/v4/starter/CLAUDE.md | `CLAUDE.md` |
-   | https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/v4/starter/.claude/settings.json | `.claude/settings.json` |
-   | https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/v4/starter/.claude/agents/manager.md | `.claude/agents/manager.md` |
-   | https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/v4/starter/.claude/agents/builder.md | `.claude/agents/builder.md` |
+   | https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/v5/starter/CLAUDE.md | `CLAUDE.md` |
+   | https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/v5/starter/.claude/settings.json | `.claude/settings.json` |
+   | https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/v5/starter/.claude/agents/manager.md | `.claude/agents/manager.md` |
+   | https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/v5/starter/.claude/agents/builder.md | `.claude/agents/builder.md` |
 
    For a file that already existed, show the person the difference
    between it and the copy. Move the copy into place only after they
@@ -136,6 +137,6 @@ Code only.
    That is the pattern working.
 
 Then point them at the guide's README,
-https://github.com/brackenjoe/agent-infrastructure/blob/v4/README.md, for
-what to add next: a domain agent when an area keeps coming back, and the
-checks in `tools/`.
+https://github.com/brackenjoe/agent-infrastructure/blob/v5/README.md#on-one-machine,
+for what to add next: a domain agent when an area keeps coming back, and
+the checks in `tools/`.

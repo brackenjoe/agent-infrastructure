@@ -19,7 +19,7 @@ body:
     id: version
     attributes:
       label: Version
-      description: Claude Code, Ubuntu, Tailscale, cloudflared or TAK Server, whichever applies
+      description: Claude Code, Codex (the date you saw it), Ubuntu, Tailscale, cloudflared or TAK Server, whichever applies
     validations:
       required: true
   - type: textarea

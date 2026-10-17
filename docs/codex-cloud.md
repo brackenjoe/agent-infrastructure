@@ -1,6 +1,6 @@
 # Codex in the cloud
 
-The Codex half of [Set it up in the cloud](https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/v4/docs/cloud.md).
+The Codex half of [Set it up in the cloud](https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/v5/docs/cloud.md).
 Written for the AI guiding the person. Target: current **Codex Cloud**,
 checked against OpenAI documentation on **2026-10-16**:
 [Codex Cloud overview](https://learn.chatgpt.com/docs/cloud) and
@@ -70,7 +70,7 @@ When sections 2 to 4 are done, have the person save, select **Publish**
 (or **Republish** if already published), and wait for **Environment
 published**. Then have them select **Start a new task** and paste the
 Phase 2 prompt, word for word, from
-https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/v4/docs/cloud.md
+https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/v5/docs/cloud.md
 as the first message. That prompt includes "Rules, for every step" and
 routes Codex to the section below. Your guiding-chat role ends there
 unless they return with a question.
@@ -79,7 +79,7 @@ unless they return with a question.
 
 You are now the coding agent in the person's new repository. Follow
 "Rules, for every step" from
-https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/v4/docs/cloud.md,
+https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/v5/docs/cloud.md,
 read with `curl -fsSL`.
 Each cloud task has its own workspace. Do not install this guide's host
 boot services or Claude-specific starter files. Preserve configured
@@ -99,7 +99,7 @@ report the destination and error without exposing credentials.
    [OpenAI's AGENTS.md guidance](https://learn.chatgpt.com/docs/agent-configuration/agents-md);
    the person can read it in their browser. Preserve existing
    instructions that still apply. Adapt workflow ideas from the MIT-0
-   [starter rule set](https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/v4/starter/CLAUDE.md).
+   [starter rule set](https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/v5/starter/CLAUDE.md).
    Claude agent files, model names and permission settings do not
    configure Codex. Do not install them.
 4. If the repository had no `AGENTS.md`, write it and show the diff. If
@@ -127,7 +127,7 @@ the resulting diff and PR path. If it cannot read the instructions,
 check the selected repository and branch before continuing.
 
 Suggest a small first task with a clear result, allowed files and checks.
-The [brief and report](https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/v4/examples/brief-and-report.md)
+The [brief and report](https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/v5/examples/brief-and-report.md)
 shows the pattern. Start with one agent. This verifies the Codex project
 workflow; it does not install Claude's manager and builder roles.
 

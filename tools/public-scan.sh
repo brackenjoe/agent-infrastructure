@@ -11,6 +11,12 @@
 # shapes. Pass or fail only: exit 0 clean, 1 on any hit, 2 on bad usage.
 # It does not replace reading the diff; it catches what reading misses.
 #
+# The email and IPv4 patterns also take an address whose at sign or dots are
+# written as a Markdown backslash escape or an HTML character reference, which
+# a page renders as a plain address. The password pattern is case-insensitive and
+# takes a quoted key and value, so a JSON field and an upper-case shell
+# variable are caught as well as a plain assignment.
+#
 # Deny list: each non-empty, non-# line of $PUBLIC_SCAN_DENY (default:
 # public-scan.deny beside this script) is a term, matched case-insensitively
 # as a fixed whole word. A missing file is skipped, so a public copy of this
@@ -25,23 +31,26 @@ dir="${1:-}"
 # label|regex, one per line; label|P|regex for a Perl regex (grep -P).
 # Loopback 127.0.0.1 and the wildcard 0.0.0.0 identify nothing and pass.
 patterns='
-IPv4 address|P|\b(?!127\.0\.0\.1\b|0\.0\.0\.0\b)([0-9]{1,3}\.){3}[0-9]{1,3}\b
+IPv4 address|P|\b(?!127[.]0[.]0[.]1\b|0[.]0[.]0[.]0\b)([0-9]{1,3}(?:\\?\.|&#0*46;|&#[xX]0*2[eE];|&period;)){3}[0-9]{1,3}\b
 Tailscale MagicDNS name|[a-z0-9-]+\.ts\.net
-email address|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}
+email address|[A-Za-z0-9._%+-]+(\\?@|&#0*64;|&#[xX]0*40;|&commat;)([A-Za-z0-9-]|\\?\.|&#0*46;|&#[xX]0*2[eE];|&period;)+(\\?\.|&#0*46;|&#[xX]0*2[eE];|&period;)[A-Za-z]{2,}
 US phone number|\b[0-9]{3}[-. ][0-9]{3}[-. ][0-9]{4}\b
 GitHub token|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}
 Anthropic key|sk-ant-[A-Za-z0-9_-]{10,}
 AWS access key|AKIA[0-9A-Z]{16}
 Slack token|xox[abpr]-[A-Za-z0-9-]{10,}
+Tailscale auth key|tskey-[a-z]+-[A-Za-z0-9-]{10,}
 private key block|BEGIN [A-Z ]*PRIVATE KEY
 WiFi PSK|psk[=]
-assigned password|(password|passwd|secret)[[:space:]]*[:=][[:space:]]*[^[:space:]]{4,}
+assigned password|P|(?i)(password|passwd|secret)["\x27]?\s*[:=]\s*["\x27]?[^\s"\x27]{4,}
 Cloudflare tunnel credentials|Tunnel[S]ecret|Account[T]ag
 IPv6 address|P|(?i)(?<![0-9a-f:])(?!2001:0*db8:)(?:[23][0-9a-f]{3}|fd[0-9a-f]{2})(?::{1,2}[0-9a-f]{1,4}){2,}(?![0-9a-f])
 MAC address|P|(?i)(?<![0-9a-f])(?!00(?::00){5}(?![0-9a-f]))(?!ff(?::ff){5}(?![0-9a-f]))(?:[0-9a-f]{2}:){5}[0-9a-f]{2}(?![0-9a-f])
 '
 
-if git -C "$dir" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+# rev-parse exits 0 and prints "false" inside a .git directory or a bare
+# repository, where ls-files lists nothing: only "true" takes the git branch.
+if [ "$(git -C "$dir" rev-parse --is-inside-work-tree 2>/dev/null)" = true ]; then
   files=$(git -C "$dir" ls-files -z --cached --others --exclude-standard | xargs -0 -I{} printf '%s\n' "$dir/{}")
 else
   files=$(find "$dir" -path '*/.git' -prune -o -type f -print)
