@@ -25,7 +25,7 @@ the live ones.
 - **Every rule has a failure behind it.** [Fifteen incidents](docs/incidents.md)
   and the rule each one produced; one has none yet.
 
-**New to this? [Set it up in the cloud](https://github.com/brackenjoe/agent-infrastructure/blob/v2/docs/cloud.md).**
+**New to this? [Set it up in the cloud](https://github.com/brackenjoe/agent-infrastructure/blob/v3/docs/cloud.md).**
 No server: make a GitHub account, point the AI you already use at that
 page, and it walks you through Claude Code in the cloud with a manager, a
 builder and a short rule set, or through [Codex in the cloud](docs/codex-cloud.md)
