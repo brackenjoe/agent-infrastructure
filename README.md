@@ -3,7 +3,7 @@
 A guide for AI agent set up in [Claude Code](https://code.claude.com/docs/en/overview),
 or [ChatGPT Codex](https://chatgpt.com/codex/). A manager
 reviews each request before any work starts, a cheaper builder writes code
-once the design is settled, and any agents for other repetitive task you need handle.
+once the design is settled, and any agents for other repetitive task you need handled.
 Checks are rerun, not taken on an agent's word. 
 
 It scales from one cloud session with no server to a network of your own
