@@ -116,10 +116,14 @@ Push to a private remote as part of finishing; don't ask. A public remote
 needs my approval every time: publishing cannot be undone. Check
 visibility, don't assume it (gh is not installed):
 
-  curl -s -o /dev/null -w '%{http_code}\n' https://api.github.com/repos/<owner>/<repo>
+  curl -s -w '\n%{http_code}\n' https://api.github.com/repos/<owner>/<repo> | grep -E '"visibility"|^[0-9]{3}$'
 
-404 is private or nonexistent, 200 public. Either way, read the diff for
-credentials first; the exclusion list is in system/README.md. New or
-rewritten public prose gets a read-only review, before the push, by an
-agent with none of the drafting context; its findings are checked like
-any report.
+Public if that prints "public". Private if it prints "private", or only
+404. Anything else (403, 5xx, 000, nothing) proves nothing: ask. Through a
+cloud session's proxy a private repo also answers 200, and a repo not
+attached to the session answers 403 even when public. Either way, read
+the diff for credentials first; the exclusion list is in system/README.md.
+New or rewritten public prose gets a read-only review, before the push, by
+an agent with none of the drafting context; for the agent guide, only its
+versioned pages and claims about security or permissions need one. Its
+findings are checked like any report.

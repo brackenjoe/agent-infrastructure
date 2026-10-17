@@ -1,0 +1,75 @@
+# Checks every pull request runs before the maintainer merges it.
+# The scanner is taken from the base commit, so a pull request that edits
+# tools/public-scan.sh does not change the scan. A pull request that edits
+# this file runs its own copy of it: read any change under .github/ before
+# trusting a green run. It has only the public patterns: the maintainer's
+# private terms are checked again before each publish.
+name: checks
+on: pull_request
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Public scan, with the scanner from the base commit
+        run: |
+          git show "${{ github.event.pull_request.base.sha }}:tools/public-scan.sh" > "$RUNNER_TEMP/public-scan.sh"
+          bash "$RUNNER_TEMP/public-scan.sh" .
+      - name: Every file is one the scanner can read
+        run: |
+          git ls-files -z | python3 -c '
+          import sys
+          bad = []
+          for n in sys.stdin.buffer.read().split(b"\0"):
+              if not n:
+                  continue
+              if b"\n" in n or b"\0" in open(n, "rb").read():
+                  bad.append(n)
+          for n in bad:
+              print("a newline in the name or a NUL byte in the file:", repr(n))
+          sys.exit(1 if bad else 0)
+          '
+      - name: No em dashes
+        run: |
+          set +e
+          grep -rnE --exclude-dir=.git -e $'\xe2\x80\x94' -e '&mdas[h];' -e '&#821[2];' -e '&#x201[4];' .
+          rc=$?
+          set -e
+          if [ "$rc" -eq 0 ]; then echo "::error::em dashes, listed above"; exit 1; fi
+          if [ "$rc" -ne 1 ]; then echo "::error::grep failed (exit $rc)"; exit 1; fi
+      - name: Relative markdown links resolve
+        run: |
+          git ls-files -z '*.md' | python3 -c '
+          import os, re, sys
+          bad = 0
+          for f in sys.stdin.buffer.read().decode().split("\0"):
+              if not f:
+                  continue
+              text = open(f, encoding="utf-8", errors="replace").read()
+              for m in re.finditer(r"\]\(<?([^)#\s>]+)>?(?:#[^)\s]*)?(?:\s+\"[^\"]*\")?\)", text):
+                  t = m.group(1)
+                  if not re.match(r"[a-z]+:", t) and not os.path.exists(os.path.join(os.path.dirname(f), t)):
+                      print(f"{f} -> {t}")
+                      bad = 1
+          sys.exit(bad)
+          '
+      - name: Copies, versioned pages and workflows
+        run: |
+          changed=$(git -c core.quotePath=false diff --no-renames --name-only "${{ github.event.pull_request.base.sha }}" HEAD)
+          fail=0
+          while IFS= read -r f; do
+            case "$f" in
+              setup/*|tools/*)
+                echo "::error file=$f::setup/ and tools/ are copies of the maintainer's live files and are overwritten at each publish; describe the change in an issue instead"
+                fail=1 ;;
+              docs/cloud.md|docs/claude-code-cloud.md|docs/codex-cloud.md|starter/*)
+                echo "::warning file=$f::versioned page: it is released under the next tag, and the maintainer updates its links" ;;
+              .github/*)
+                echo "::warning file=$f::changes the repository's own checks; the maintainer reviews these by hand" ;;
+            esac
+          done <<< "$changed"
+          exit $fail

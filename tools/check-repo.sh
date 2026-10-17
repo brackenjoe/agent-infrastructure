@@ -27,9 +27,13 @@
 #   links          every relative markdown link in our own .md files
 #                  resolves (CHANGELOGs, captures, third-party trees and
 #                  the public guide's source, whose links resolve only in
-#                  the stage publish-agent-infra.sh checks) (CLAUDE.md, layout)
-#   worktrees      no worktree other than the main checkout is older than
-#                  a day                                   (CLAUDE.md, worktrees)
+#                  the stage publish-agent-infra.sh checks, are left out).
+#                  File names are read NUL-separated, so a space is fine;
+#                  a checker that exits nonzero is a FAIL, never a pass
+#                                                              (CLAUDE.md, layout)
+#   worktrees      no worktree other than the main checkout has been idle
+#                  for a day: the newest file in it, .git aside, is under
+#                  24 h old                                (CLAUDE.md, worktrees)
 #   system capture every file under system/files/ matches the live file it
 #                  was copied from                         (system/README.md)
 #   $HOME          holds dotfiles and the repo and nothing else (CLAUDE.md)
@@ -78,26 +82,46 @@ projects=(work/*/)
 OK "job records checked (${#projects[@]} projects)"
 
 # links
-broken=$(git ls-files '*.md' | grep -v -e '^tools/ardupilot' -e '^tools/ap-' -e '^tools/ExpressLRS' \
+# Names are NUL-separated (git ls-files -z, grep -z), so a name with a space
+# survives. The checker's exit status is read: a crash is a FAIL, not an empty
+# list that reads as a pass. PIPESTATUS is [git, grep, python3]; grep exits 1
+# when it drops every name, which is not an error.
+lk=$(mktemp)
+git ls-files -z '*.md' | grep -z -v -e '^tools/ardupilot' -e '^tools/ap-' -e '^tools/ExpressLRS' \
     -e '^tools/elrs-' -e '^tools/mLRS' -e 'CHANGELOG.md$' -e '/system/files/' \
     -e '^work/personal/github-agent-ops/public/' | python3 -c '
 import os, re, sys
-for f in sys.stdin.read().split():
+for n in sys.stdin.buffer.read().split(b"\0"):
+    if not n:
+        continue
+    f = os.fsdecode(n)
     for m in re.finditer(r"\]\(([^)#\s]+)(#[^)]*)?\)", open(f, encoding="utf-8", errors="replace").read()):
         t = m.group(1)
         if not re.match(r"[a-z]+:", t) and not os.path.exists(os.path.join(os.path.dirname(f), t)):
             print(f"{f} -> {t}")
-')
-[ -z "$broken" ] && OK "every relative markdown link resolves" \
-  || { echo "$broken" | sed 's/^/      /'; FAIL "broken markdown links, listed above"; }
+' >"$lk"
+st=("${PIPESTATUS[@]}")
+rc=${st[2]}; [ "$rc" -eq 0 ] && rc=${st[0]}
+broken=$(<"$lk"); rm -f "$lk"
+[ -n "$broken" ] && echo "$broken" | sed 's/^/      /'
+if [ "$rc" -ne 0 ]; then FAIL "link checker failed (exit $rc)"
+elif [ -n "$broken" ]; then FAIL "broken markdown links, listed above"
+else OK "every relative markdown link resolves"; fi
 
 # worktrees
+# Idle time, not folder age: a folder's mtime moves only when a top-level
+# entry is added or removed, so a worktree under daily edits would read old.
+# Idle is now minus the newest mtime of any file, .git excluded; 0 from awk
+# means find saw no file (a missing or empty worktree), which is also a FAIL.
 now=$(date +%s)
 wt=$(mktemp)
-git worktree list --porcelain | awk '/^worktree /{print $2}' | while read -r w; do
+git worktree list --porcelain | awk '/^worktree /{sub(/^worktree /, ""); print}' | while read -r w; do
   [ "$w" = "$ROOT" ] && continue
-  age=$(( (now - $(stat -c %Y "$w")) / 3600 ))
-  if [ "$age" -ge 24 ]; then echo "FAIL  worktree $w is ${age}h old; finish it: merge, push, remove, delete the branch"; fi
+  newest=$(find "$w" -name .git -prune -o -type f -printf '%T@\n' 2>/dev/null \
+    | awk '$1 > m {m = $1} END {printf "%d\n", m}')
+  if [ "$newest" -eq 0 ]; then echo "FAIL  worktree $w has no files; remove it: git worktree remove, or git worktree prune"; continue; fi
+  idle=$(( (now - newest) / 3600 ))
+  if [ "$idle" -ge 24 ]; then echo "FAIL  worktree $w idle for ${idle}h (newest file); finish it: merge, push, remove, delete the branch"; fi
 done | tee "$wt" ; grep -q FAIL "$wt" && fail=1; rm -f "$wt"
 OK "worktrees checked"
 

@@ -16,7 +16,10 @@ like the rest of the code here.
 | `60-panic-reboot.conf`, `61-lockup-panic.conf` | `/etc/sysctl.d/` | a panic or detected lockup reboots the box |
 | `10-hardening.conf` | `/etc/ssh/sshd_config.d/` | no password logins; sorts before `50-cloud-init.conf`, whose `yes` would otherwise win |
 
-Then:
+Then, once by hand in the working directory, run
+`claude remote-control --spawn=same-dir`, answer `y` to
+`Enable Remote Control?` and to the trust question if it asks, and stop it
+with Ctrl-C. The unit cannot answer them. Then:
 
     systemctl --user daemon-reload && systemctl --user enable --now claude-remote
     loginctl enable-linger "$USER"

@@ -37,12 +37,14 @@ front page; docs/ holds the detail. Two folders are copies, not sources:
   `tools/public-scan.sh .` and read your own diff before proposing a change.
 
 ## Before anything is published
-- New or rewritten prose gets a read-only review by an agent that did not
-  draft it. Check its findings against sources; do not take them on its
-  word.
+- A change to a versioned page, or a claim about security or permissions,
+  gets a read-only review by an agent that did not draft it. Check its
+  findings against sources; do not take them on their word.
 - Report each check you ran with its result, and each you did not run.
-- Publishing to the public repository is a public act the owner approves
-  each time, in the session, before `tools/publish-from-dev.sh --push`
-  runs. See MAINTAINING.md.
-- With the public repository attached to a session, commit nothing in its
-  clone and push no branch to it. Its only write is that `--push`.
+- Changes from outside arrive as pull requests. The owner merges them
+  here and brings them into the private source the guide is published
+  from.
+- The owner publishes a snapshot of that source with checks of their own,
+  and approves each publish in the session first. An agent with this
+  repository attached pushes no branch to it and makes no API write to
+  it.

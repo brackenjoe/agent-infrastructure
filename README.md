@@ -25,10 +25,10 @@ the live ones.
 - **Every rule has a failure behind it.** [Fifteen incidents](docs/incidents.md)
   and the rule each one produced; one has none yet.
 
-**New to this? [Set it up in the cloud](https://github.com/brackenjoe/agent-infrastructure/blob/v3/docs/cloud.md).**
+**New to this? [Set it up in the cloud](https://github.com/brackenjoe/agent-infrastructure/blob/v4/docs/cloud.md).**
 No server: make a GitHub account, point the AI you already use at that
 page, and it walks you through Claude Code in the cloud with a manager, a
-builder and a short rule set, or through [Codex in the cloud](docs/codex-cloud.md)
+builder and a short rule set, or through [Codex in the cloud](https://github.com/brackenjoe/agent-infrastructure/blob/v4/docs/codex-cloud.md)
 with project instructions in AGENTS.md.
 
 **Read in this order:** the diagram and agents below, then
@@ -114,10 +114,10 @@ doing most of the code, took 5.5%.
 
 Most rules are instructions the model is trusted to follow. These are
 enforced by something other than the model. The Claude Code rows were
-checked against version 2.1.289 and the
+checked against versions 2.1.289 and 2.1.302 and the
 [permissions](https://code.claude.com/docs/en/permissions) and
 [permission modes](https://code.claude.com/docs/en/permission-modes) docs,
-read 2026-10-16.
+read 2026-10-17.
 
 | Rule | Enforced by | Limits |
 |---|---|---|
@@ -126,7 +126,7 @@ read 2026-10-16.
 | The agent server cannot reach the TAK server | Tailscale access rules | The web server can, and agents deploy to it with sudo; that path is closed only by the stop rule |
 | Deploy targets hold no key back to the agent server | SSH: no key installed on the targets | |
 | Repo layout, index, links and stale worktrees | `tools/check-repo.sh` | only when run |
-| No addresses, network names, private terms or credentials in a public push | `tools/public-scan.sh` | only when run; does not replace reading the diff |
+| No addresses, network names, private terms or credentials in a public push | `tools/public-scan.sh` | on every pull request here (public patterns only) and when run; does not replace reading the diff |
 
 **Why the agent-file rule exists when Claude Code already protects
 `.claude/`.** Without it, that built-in protection prompts in manual and
@@ -140,7 +140,18 @@ refused agent files both at the root and inside a git worktree under
 bypass sessions ask too; in a `-p` run with nobody to answer, it is
 denied. Keep the `**/` prefix: `Edit(.claude/agents/**)` matches only
 where the session starts and let a worktree copy through in bypass mode.
+The docs agree: a one-folder pattern such as `Edit(src/**)` matches at any
+depth as a deny or ask rule, but a two-folder pattern is anchored where
+the session starts (permissions, read 2026-10-17).
 `tools/check-permissions.sh` repeats the bypass case on your version.
+
+Cloud sessions pre-approve file edits in every mode, and the Protected
+paths section names no cloud exception (permission modes, read
+2026-10-17). Whether a cloud session still prompts on `.claude/` is not
+yet measured, so keep the ask rule. A cloud session with several
+repositories reads no permission rules from any of them, so neither the
+ask rule nor deny rules apply there (settings, Settings in cloud
+sessions, read 2026-10-17).
 
 Everything else (review before brief, verify by exercising, stop before
 credentials or the network's entry points, approval for every public push)
@@ -203,7 +214,10 @@ running without you at the keyboard.
    prompt with its body. `Edit(**/.claude/agents/**)` under `ask` means no
    session creates or rewrites an agent without you seeing it. Spawning
    needs no rule: it never prompts. Put destructive connector tools under
-   `deny`.
+   `deny`, under every name they take: `mcp__claude_ai_<server>__<tool>`
+   where Claude Code fetches the connector itself (permissions, MCP, read
+   2026-10-17), and `mcp__<server>__<tool>` in a cloud session with one
+   repository, as seen here on 2026-10-17.
 6. **Give each job its own worktree.** Several sessions share one checkout,
    and one session's `git stash` once took another's live edits. Put
    worktrees under `.claude/worktrees/` and add `**/.claude/worktrees/` to
@@ -235,7 +249,7 @@ running without you at the keyboard.
 
     setup/CLAUDE.md               the rules every agent reads, every session
     setup/.claude/agents/*.md     the ten agents: manager, builder, and eight domain agents
-    setup/.claude/settings.json   the session default and the spawn and edit permissions
+    setup/.claude/settings.json   the session default, the agent-file ask rule and deny rules for destructive connector tools
     host/                         the agent server's unit, loop script, shell function and drop-ins
     starter/                      the trimmed manager, builder, rules and settings the cloud setup installs
     examples/                     a real builder brief and report; skeletons of the files setup/ points at
@@ -243,12 +257,11 @@ running without you at the keyboard.
     tools/public-scan.sh          scan a directory before you push it anywhere public
     tools/check-repo.sh           example: the repo's own rules, checked by script
     tools/check-permissions.sh    check the agent-file ask rule still holds, in a throwaway repo
-    tools/publish-from-dev.sh     publish from the private working repo: scan, show, push only with --push
     LICENSE, LICENSE-CODE         CC BY 4.0 for text, MIT for code (starter/LICENSE: MIT-0)
     CONTRIBUTING.md, SECURITY.md  how to contribute; how to report a security problem
+    .github/workflows/check.yml   on every pull request: public scan, em dashes, relative links, no edits to setup/ or tools/
     AGENTS.md, CLAUDE.md          the rules any agent follows when editing this repo (CLAUDE.md imports AGENTS.md)
     .claude/settings.json         for sessions on this repo: no session links in commits; setup/ and starter/ rules not loaded
-    MAINTAINING.md                how the owner edits from cloud sessions and publishes
 
 The `setup/` and `tools/` files are copied unedited from the live repo at
 each publish (edit them there, not here), so they use its real names. In

@@ -16,7 +16,7 @@ ingress:
 
 Run `cloudflared tunnel ingress validate`, then `systemctl restart cloudflared` (`reload` fails: no `ExecReload=`). Verify by fetching every hostname from outside your network.
 
-- Cloudflare rotated its package signing key on 30 October 2025. Older guides fail.
+- Cloudflare rolled over its package signing key on 30 October 2025. A machine that still holds the old key stops getting updates: RPM systems and Debian Trixie at once, others once the old key was removed on 30 April 2026. Download `cloudflare-main.gpg` again to fix it (the pkg.cloudflare.com notice, read from its source on 2026-10-17).
 - Check which login methods your Access organization has. Here one-time PIN was off, so only the account owner could sign in, and the owner could not tell. Organizations created since 2026-06-18 start with the Cloudflare identity provider, which admits only members of your Cloudflare account ([changelog](https://developers.cloudflare.com/changelog/post/2026-06-18-cloudflare-idp-default/)). Test from an address with no Cloudflare account.
 - Removing someone from the policy does not end their session. Revoke their tokens too.
 
