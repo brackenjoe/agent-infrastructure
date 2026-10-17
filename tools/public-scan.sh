@@ -16,6 +16,9 @@
 # a page renders as a plain address. The password pattern is case-insensitive and
 # takes a quoted key and value, so a JSON field and an upper-case shell
 # variable are caught as well as a plain assignment.
+# Token shapes beyond the vendor-prefixed ones: OpenAI-style, Google API, npm and
+# GitLab keys, an Authorization Bearer value, and an assigned API key (a value
+# that starts with $, <, { or % is a placeholder and passes).
 #
 # Deny list: each non-empty, non-# line of $PUBLIC_SCAN_DENY (default:
 # public-scan.deny beside this script) is a term, matched case-insensitively
@@ -37,6 +40,12 @@ email address|[A-Za-z0-9._%+-]+(\\?@|&#0*64;|&#[xX]0*40;|&commat;)([A-Za-z0-9-]|
 US phone number|\b[0-9]{3}[-. ][0-9]{3}[-. ][0-9]{4}\b
 GitHub token|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}
 Anthropic key|sk-ant-[A-Za-z0-9_-]{10,}
+OpenAI-style key|P|\bsk-(?!ant-)(?:proj-|svcacct-|admin-)?[A-Za-z0-9_-]{20,}
+Google API key|AIza[0-9A-Za-z_-]{35}
+npm token|npm_[A-Za-z0-9]{36}
+GitLab token|glpat-[A-Za-z0-9_-]{20,}
+Bearer header|P|(?i)\bbearer\s+[A-Za-z0-9._~+/=-]{16,}
+assigned API key|P|(?i)(?<![A-Za-z0-9])api[_-]?key["\x27]?\s*[:=]\s*["\x27]?(?![$<{%])[^\s"\x27]{8,}
 AWS access key|AKIA[0-9A-Z]{16}
 Slack token|xox[abpr]-[A-Za-z0-9-]{10,}
 Tailscale auth key|tskey-[a-z]+-[A-Za-z0-9-]{10,}

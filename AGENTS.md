@@ -19,7 +19,9 @@ front page; docs/ holds the detail. Two folders are copies, not sources:
 
 ## Versioned pages
 `docs/cloud.md`, `docs/claude-code-cloud.md`, `docs/codex-cloud.md` and
-`starter/` are followed by readers' AIs at a git tag (`v1`, `v2`, ...).
+`starter/` are followed by readers' AIs at a git tag: `v1` to `v5`, then
+dated tags `YYYY.MM.DD.N` (UTC date, then a revision for that day, such as
+`2026.10.18.1`).
 
 - Never move or delete a tag. A change to these pages is released as the
   next tag, with every link in them updated to it in the same change.
