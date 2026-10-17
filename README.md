@@ -1,14 +1,13 @@
 # agent-infrastructure
 
-How to set up [Claude Code](https://code.claude.com/docs/en/overview),
-Anthropic's agentic coding tool, to work like a small, careful team. A manager
-reviews each request before any work starts. A cheaper builder writes code
-once the design is settled. Checks are rerun, not taken on an agent's
-word. A table says which rules Claude Code or the network enforces, and
-which the model is only asked to follow.
+A guide for AI agent set up in [Claude Code](https://code.claude.com/docs/en/overview),
+or [ChatGPT Codex](https://chatgpt.com/codex/). A manager
+reviews each request before any work starts, a cheaper builder writes code
+once the design is settled, and any agents for other repetitive task you need handle.
+Checks are rerun, not taken on an agent's word. 
 
 It scales from one cloud session with no server to a network of your own
-machines. It was written from the setup Bracken Systems runs, and every
+machines. It was written from the Claude Code setup Bracken Systems runs, and every
 practice here came from running it: the [incidents](docs/incidents.md)
 are fifteen failures from six weeks, fourteen of them with the rule they
 produced. [The reference build](docs/reference-build.md) is the full setup
