@@ -9,7 +9,7 @@ them. Checks are rerun, not taken on an agent's word.
 It scales from one cloud session with no server to a network of your own
 machines. It was written from the Claude Code setup Bracken Systems runs, and every
 practice here came from running it: the [incidents](docs/incidents.md)
-are fifteen failures from six weeks, fourteen of them with the rule they
+are sixteen failures from six weeks, fifteen of them with the rule they
 produced. [The reference build](docs/reference-build.md) is the full setup
 they came from, and why it is shaped that way. Codex is covered for the
 cloud path.

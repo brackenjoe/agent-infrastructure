@@ -1,13 +1,14 @@
 # Incidents, and the rules they produced
 
 [Back to the README](../README.md). Most rules in [`setup/`](../setup/) exist
-because something went wrong first. These are fourteen that produced a
+because something went wrong first. These are fifteen that produced a
 rule and one that has not yet, from six weeks of running this setup
 (September and October 2026), newest first. Security details are left
 out; the rule each one produced is in the live files.
 
 | Date | What went wrong | How it was caught | Rule now |
 |---|---|---|---|
+| 2026-10-17 | A new pull-request check that runs gitleaks was run against test pull requests and reported ready to publish. It could pass having scanned nothing: gitleaks logs git's errors (a missing base commit, an ambiguous ref) and still exits 0. Its comments did not say what the scan skips, or that it is not built for a pull request made to hide something. | The existing rule that claims about security get a cold review: two reviews by agents with none of the drafting context, before the push. The second found a `.gitattributes` that hides every diff from the scan. Each finding was reproduced, fixed and rerun. | A scanner's exit code is not evidence it scanned: the check reads its output and fails an empty or erroring scan. |
 | 2026-10-16 | A builder's test commit, titled "feat" and adding a one-line file named `f`, landed in the guide's source folder in the private repo. The builder is told never to commit; that is an instruction, not a permission. | Reading the publish stage before the push. Reverted; never public. | None yet. The instruction stands, and the publish step shows every file for the owner to read before anything is pushed. |
 | 2026-10-16 | The first version of `tools/check-permissions.sh` could report a pass with no evidence that anything had been refused. The revision that fixed it claimed, from the docs' protected-paths list, that the built-in protection skips agent files in worktree copies. Measured on 2.1.289, it refuses them. | A read-only review by an agent with none of the drafting context, in two passes, before the push | The script needs a recorded denial and a negative control, or it reports inconclusive. The worktree claim was measured and corrected, and `tools/check-permissions.sh` runs after every Claude Code update. |
 | 2026-10-16 | The published enforcement table, written from reading the docs, was wrong three ways. It said spawning an unlisted agent asks first: `Agent(...)` allow rules do nothing, and spawning never prompts. It said `bypassPermissions` skips ask rules: they hold. It said `Edit(.claude/agents/**)` matches at any depth: it matched only where the session starts, and let a worktree copy through in bypass mode. | A cold review by an agent with none of the drafting context; its findings checked against the [permissions](https://code.claude.com/docs/en/permissions) and [permission modes](https://code.claude.com/docs/en/permission-modes) docs, read 2026-10-16 | The ask rule is `Edit(**/.claude/agents/**)`, and `tools/check-permissions.sh` measures it after each Claude Code update. New or rewritten public prose gets a read-only review by an agent with none of the drafting context before the push. |
@@ -31,7 +32,8 @@ out; the rule each one produced is in the live files.
    upgrade theory, the first enforcement table.
 2. **A check that existed but did not exercise the act:** the
    guarded-looking delete, the `active` service, the result read from a
-   report, the permission check that could pass without a refusal.
+   report, the permission check that could pass without a refusal, the
+   secret scan that could pass without scanning.
 3. **Cost from routing, not capability:** the most expensive failure was not
    a wrong answer but the right work done by the wrong model.
 4. **An instruction, not a permission:** the builder's commit. The table of

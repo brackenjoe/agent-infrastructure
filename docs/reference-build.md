@@ -136,4 +136,4 @@ the tool index, the machine record); the skeletons show their shape.
 | [Network and access](network.md) | Tailscale grants, one-way SSH deploy keys |
 | [The web server](web-server.md) | loopback apps behind Cloudflare Tunnel and Access, ufw, deploy by push, the stop rule |
 | [TAK Server integration](tak-integration.md) | mission packages and CoT to a TAK Server over mutual TLS, failing closed, testing without a server |
-| [Incidents](incidents.md) | fifteen failures in six weeks, how each was caught, and the rule it produced, if any |
+| [Incidents](incidents.md) | sixteen failures in six weeks, how each was caught, and the rule it produced, if any |
