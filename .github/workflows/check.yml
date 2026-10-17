@@ -4,6 +4,13 @@
 # this file runs its own copy of it: read any change under .github/ before
 # trusting a green run. It has only the public patterns: the maintainer's
 # private terms are checked again before each publish.
+# gitleaks is downloaded at a pinned version and checksum and run with its
+# pinned default config, so a pull request cannot change the rules by adding
+# a config or ignore file (it can still edit this workflow, as above). These
+# checks are for mistakes, not for a pull request built to hide something:
+# the default config skips some paths and file types (images, lock files,
+# node_modules, archives and others), the public scan reads only the final
+# tree, and the maintainer reads every pull request before merging it.
 name: checks
 on: pull_request
 permissions:
@@ -19,6 +26,52 @@ jobs:
         run: |
           git show "${{ github.event.pull_request.base.sha }}:tools/public-scan.sh" > "$RUNNER_TEMP/public-scan.sh"
           bash "$RUNNER_TEMP/public-scan.sh" .
+      - name: gitleaks 8.30.1, pinned, over the tree and the pull request's commits
+        run: |
+          v=8.30.1
+          tar_sha=551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb
+          cfg_sha=e163e53b9e7e8a8511e77271e2b323ed057759542a6d988258afe3a1fa329caf
+          cd "$RUNNER_TEMP"
+          curl -sSfL -o gitleaks.tar.gz "https://github.com/gitleaks/gitleaks/releases/download/v$v/gitleaks_${v}_linux_x64.tar.gz"
+          curl -sSfL -o gitleaks.toml "https://raw.githubusercontent.com/gitleaks/gitleaks/v$v/config/gitleaks.toml"
+          echo "$tar_sha  gitleaks.tar.gz" | sha256sum -c -
+          echo "$cfg_sha  gitleaks.toml" | sha256sum -c -
+          tar -xzf gitleaks.tar.gz gitleaks
+          mkdir -p empty
+          cd "$GITHUB_WORKSPACE"
+          fail=0
+          tracked=$(git ls-files)
+          # In the final tree: gitleaks honours a .gitleaksignore at the root
+          # whatever -i says, and its default config skips any path containing
+          # gitleaks.toml, so both are refused anywhere in a path.
+          if printf '%s\n' "$tracked" | grep -E 'gitleaks\.toml|\.gitleaksignore' >/dev/null; then
+            echo "::error::a tracked path containing gitleaks.toml or .gitleaksignore: gitleaks would skip it or be told to ignore findings, so these are not allowed"
+            fail=1
+          fi
+          base="${{ github.event.pull_request.base.sha }}"
+          git rev-parse --verify --quiet "$base^{commit}" >/dev/null || { echo "::error::the base commit $base is not in the clone: the commits cannot be scanned"; exit 1; }
+          git rev-parse --verify --quiet "$GITHUB_SHA^{commit}" >/dev/null || { echo "::error::the checked-out commit $GITHUB_SHA is not in the clone"; exit 1; }
+          cd "$RUNNER_TEMP/empty"
+          # gitleaks can log an error or a warning, scan nothing and still exit 0
+          # (a bad range, anything git writes to stderr, a skipped file), so its
+          # output is read as well, and an empty scan fails.
+          gl() {
+            out=$(env -u GITLEAKS_CONFIG -u GITLEAKS_CONFIG_TOML "$RUNNER_TEMP/gitleaks" "$@" --config "$RUNNER_TEMP/gitleaks.toml" --no-banner --no-color --redact --verbose --ignore-gitleaks-allow -i "$RUNNER_TEMP/empty" 2>&1)
+            rc=$?
+            printf '%s\n' "$out"
+            if [ "$rc" -eq 0 ] && printf '%s\n' "$out" | grep -E '(^| )(ERR|WRN) |(^| )0 commits scanned|scanned ~0 bytes' >/dev/null; then rc=3; fi
+            return "$rc"
+          }
+          set +e
+          gl dir "$GITHUB_WORKSPACE"
+          rc=$?
+          if [ "$rc" -ne 0 ]; then echo "::error::gitleaks found a secret in the tree, or failed (exit $rc)"; fail=1; fi
+          # -m: git log -p shows no diff for a merge commit without it. --text: a
+          # .gitattributes in the pull request could otherwise mark every file binary.
+          gl git "$GITHUB_WORKSPACE" --log-opts="--text -m $base..$GITHUB_SHA"
+          rc=$?
+          if [ "$rc" -ne 0 ]; then echo "::error::gitleaks found a secret in the pull request's commits, or failed (exit $rc)"; fail=1; fi
+          exit $fail
       - name: Every file is one the scanner can read
         run: |
           git ls-files -z | python3 -c '

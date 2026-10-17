@@ -31,6 +31,11 @@
 #                  File names are read NUL-separated, so a space is fine;
 #                  a checker that exits nonzero is a FAIL, never a pass
 #                                                              (CLAUDE.md, layout)
+#   script lint    every tracked .sh under tools/, at any depth, has no
+#                  finding from the linter at warning level or above (notes and
+#                  style findings do not fail); runs wherever shellcheck is
+#                  installed; on the box a missing shellcheck is a FAIL,
+#                  elsewhere the check is skipped     (tools/README.md, Checkers)
 #   worktrees      no worktree other than the main checkout has been idle
 #                  for a day: the newest file in it, .git aside, is under
 #                  24 h old                                (CLAUDE.md, worktrees)
@@ -107,6 +112,35 @@ broken=$(<"$lk"); rm -f "$lk"
 if [ "$rc" -ne 0 ]; then FAIL "link checker failed (exit $rc)"
 elif [ -n "$broken" ]; then FAIL "broken markdown links, listed above"
 else OK "every relative markdown link resolves"; fi
+
+# Script lint. Every tracked .sh under tools/, at any depth (a plain pathspec
+# * crosses slashes); the third-party trees under tools/ are skipped because
+# they are untracked. -S warning leaves notes and style findings alone.
+# --norc: an rc file in a parent directory could otherwise disable every
+# check. In-file disable directives still apply and stay visible in review.
+# Exit 0 is clean, 1 is findings; anything else, or findings claimed with no
+# output, means it did not run. No tracked script at all means git failed.
+if command -v shellcheck >/dev/null 2>&1; then
+  mapfile -d '' -t shfiles < <(git ls-files -z "tools/*.sh")
+  if [ ${#shfiles[@]} -eq 0 ]; then
+    FAIL "shellcheck: no tracked .sh under tools/ found (git ls-files failed?)"
+  else
+    sc=$(shellcheck --norc -S warning -f gcc "${shfiles[@]}" 2>&1); rc=$?
+    if [ "$rc" -gt 1 ] || { [ "$rc" -ne 0 ] && [ -z "$sc" ]; }; then
+      [ -n "$sc" ] && echo "$sc" | sed 's/^/      /'
+      FAIL "shellcheck did not run (exit $rc)"
+    elif [ -n "$sc" ]; then
+      echo "$sc" | sed 's/^/      /'
+      FAIL "shellcheck warnings in tools/, listed above"
+    else
+      OK "shellcheck: no warnings in ${#shfiles[@]} tracked .sh under tools/"
+    fi
+  fi
+elif [ "$ONBOX" -eq 1 ]; then
+  FAIL "shellcheck is not installed (apt install shellcheck)"
+else
+  SKIP "shellcheck: not installed here, not on $BOX"
+fi
 
 # worktrees
 # Idle time, not folder age: a folder's mtime moves only when a top-level
