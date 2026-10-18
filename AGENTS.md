@@ -31,7 +31,7 @@ dated tags `YYYY.MM.DD.N` (UTC date, then a revision for that day, such as
   password, token, key or payment detail in chat.
 
 ## Writing
-- Short declarative sentences. No em dashes.
+- Short declarative sentences.
 - A claim about a product names the doc it came from and the date read.
   Check the vendor's docs; do not answer from memory.
 - No addresses, hostnames, private names or credentials outside `setup/`

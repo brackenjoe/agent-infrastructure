@@ -90,4 +90,4 @@ session would otherwise re-learn. Then:
 ## Working here
 
 Say in a line what you are about to do, what the review found, and which
-agent gets it. Finish as `CLAUDE.md` says. No em dashes anywhere.
+agent gets it. Finish as `CLAUDE.md` says.

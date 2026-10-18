@@ -52,8 +52,7 @@ installed. Both dev servers come from `tools/promo/env.sh` on `:8000` and
 `:8199` with no Access in front, data under `work/brand/promo/data/` (untracked,
 regenerable). Finished files go in `work/brand/promo/media/` (tracked),
 intermediates in `work/brand/promo/out/` (ignored). Kill servers by PID or
-`fuser -k PORT/tcp`, never `pkill -f`. No em dashes anywhere, captions
-included.
+`fuser -k PORT/tcp`, never `pkill -f`.
 
 Editing `work/brand/site/` or the apps is reaching into another
 task: say what and why first, per `CLAUDE.md` Scope. Swapping a site image

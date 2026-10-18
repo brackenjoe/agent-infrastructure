@@ -37,7 +37,7 @@ selftests, the browser checks.
 Use absolute paths, and do not `cd` inside a compound command. Stop dev
 servers with `fuser -k PORT/tcp`, never `pkill -f` (it matches the calling
 shell's own command line and kills it). Start each app from its own
-`.venv` in the main checkout; a worktree has none (`CLAUDE.md`, Worktrees). No em dashes anywhere, in code, comments or prose.
+`.venv` in the main checkout; a worktree has none (`CLAUDE.md`, Worktrees).
 
 Follow the page or module conventions the brief names (helper functions,
 CSS classes, the check file to copy). Where the brief gives a data shape,

@@ -86,14 +86,6 @@ jobs:
               print("a newline in the name or a NUL byte in the file:", repr(n))
           sys.exit(1 if bad else 0)
           '
-      - name: No em dashes
-        run: |
-          set +e
-          grep -rnE --exclude-dir=.git -e $'\xe2\x80\x94' -e '&mdas[h];' -e '&#821[2];' -e '&#x201[4];' .
-          rc=$?
-          set -e
-          if [ "$rc" -eq 0 ]; then echo "::error::em dashes, listed above"; exit 1; fi
-          if [ "$rc" -ne 1 ]; then echo "::error::grep failed (exit $rc)"; exit 1; fi
       - name: Relative markdown links resolve
         run: |
           git ls-files -z '*.md' | python3 -c '

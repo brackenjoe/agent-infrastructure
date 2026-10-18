@@ -220,8 +220,8 @@ model follows it.
 - `tools/check-repo.sh`: example: the repo's own rules, checked by script
 - `tools/check-permissions.sh`: check the agent-file ask rule still holds,
   in a throwaway repo
-- `.github/workflows/check.yml`: on every pull request, the public scan, em
-  dashes, relative links, and no edits to `setup/` or `tools/`
+- `.github/workflows/check.yml`: on every pull request, the public scan,
+  relative links, and no edits to `setup/` or `tools/`
 - `AGENTS.md`, `CLAUDE.md`: the rules any agent follows when editing this
   repo (`CLAUDE.md` imports `AGENTS.md`)
 - `.claude/settings.json`: for sessions on this repo: no session links in
