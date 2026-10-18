@@ -125,5 +125,9 @@ attached to the session answers 403 even when public. Either way, read
 the diff for credentials first; the exclusion list is in system/README.md.
 New or rewritten public prose gets a read-only review, before the push, by
 an agent with none of the drafting context; for the agent guide, only its
-versioned pages and claims about security or permissions need one. Its
-findings are checked like any report.
+versioned pages and claims about security or permissions need one. A
+review of the guide's own checks (its pull-request checks and the publish
+script) is briefed with their threat model: they catch mistakes, not a
+hostile contributor. One round; a second only if the first found something
+that must be fixed, and only on what changed. The review's findings are
+checked like any report.
