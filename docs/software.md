@@ -21,6 +21,8 @@ What the agents actually use, not every package installed. Ubuntu Server
 | MAVProxy, pymavlink | one venv shared by the ArduPilot trees | `ardupilot-programmer`, `promo` | talking to SITL and to real flight controllers |
 | `lua5.3`, `luacheck`, `lua-language-server` | apt, then an install script | `ardupilot-programmer` | linting onboard scripts, and catching calls to bindings a given firmware does not have |
 | ExpressLRS and mLRS sources, PlatformIO | git, and a venv of its own | `ardupilot-programmer` | radio firmware builds matched to the radio's own version |
+| Betaflight SITL, `python3-serial` | Betaflight source at its release tag, `make TARGET=SITL` with `build-essential`; apt | `ardupilot-programmer` | a scripted Betaflight CLI: backups, restores pinned to board and firmware, every setting read back; tested against SITL before a real board |
+| Betaflight `blackbox_decode` | built from source (`betaflight/blackbox-tools`, which ships no Linux release) | `ardupilot-programmer` | Blackbox flight logs to CSV |
 | HackRF host tools | apt, `hackrf` | `rf-sensing` | bench work with the receiver |
 | `adb` | apt | `tak-sme` | removing bloat from the Android devices that run ATAK |
 | ffmpeg | apt | `promo` | video cuts and the site's WebP image set |
@@ -28,9 +30,12 @@ What the agents actually use, not every package installed. Ubuntu Server
 
 **What stays off it.** The rule of thumb here: a headless agent box is
 useful for software whose interface is a text file, and useless for
-software whose interface is a mouse. So Fusion 360, KiCad layout and
-Betaflight Configurator are not installed, slicing happens on a laptop, and
-ATAK plugin development needs more machine than this.
+software whose interface is a mouse. So Fusion 360 and KiCad layout are
+not installed, slicing happens on a laptop, and ATAK plugin development
+needs more machine than this. The Betaflight App (formerly Configurator) is
+a web app that needs the flight controller on the machine running the
+browser, so it runs on the laptop; Betaflight's CLI and Blackbox logs are
+text, and are on the box.
 
 - Do not purge `lxd-installer` to get rid of LXD: on Ubuntu Server it takes
   the `ubuntu-server` metapackage with it.
