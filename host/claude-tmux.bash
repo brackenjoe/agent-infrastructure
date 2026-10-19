@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2026 Bracken Systems LLC
+# Copyright (c) 2026 Joe Fernandez
 # Append to ~/.bashrc. A bare `claude` over SSH attaches to (or creates) a
 # tmux session named work, so a dropped connection loses nothing; with
 # arguments it runs claude as normal.

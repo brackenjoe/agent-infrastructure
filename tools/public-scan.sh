@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2026 Bracken Systems LLC
+# Copyright (c) 2026 Joe Fernandez
 #
 # public-scan.sh DIR
 #

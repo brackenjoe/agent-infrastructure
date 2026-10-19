@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2026 Bracken Systems LLC
+# Copyright (c) 2026 Joe Fernandez
 [Unit]
 Description=tmux session running Claude Code Remote Control
 

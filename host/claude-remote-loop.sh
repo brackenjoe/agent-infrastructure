@@ -1,6 +1,6 @@
 #!/bin/bash
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2026 Bracken Systems LLC
+# Copyright (c) 2026 Joe Fernandez
 #
 # Keeps a Claude Code Remote Control server alive inside tmux, started at boot
 # by ~/.config/systemd/user/claude-remote.service.

@@ -1,6 +1,6 @@
 #!/bin/bash
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2026 Bracken Systems LLC
+# Copyright (c) 2026 Joe Fernandez
 #
 # Exercises the agent-file ask rule the repo's guide says Claude Code
 # enforces, instead of trusting the docs. Run it after every Claude Code

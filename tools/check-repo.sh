@@ -1,6 +1,6 @@
 #!/bin/bash
 # SPDX-License-Identifier: MIT
-# Copyright (c) 2026 Bracken Systems LLC
+# Copyright (c) 2026 Joe Fernandez
 #
 # Checks that the repo's own rules are being kept. Run before finishing a
 # job; CLAUDE.md says finishing means this passes. Exit 1 on any FAIL.

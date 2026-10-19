@@ -131,3 +131,7 @@ script) is briefed with their threat model: they catch mistakes, not a
 hostile contributor. One round; a second only if the first found something
 that must be fixed, and only on what changed. The review's findings are
 checked like any report.
+A private repo's commit messages name another repo's issue or pull
+request as "owner/repo PR N", never `owner/repo#N` or its URL: GitHub
+links those into the public item's timeline. tools/git-hooks/commit-msg
+refuses them.
