@@ -1,6 +1,6 @@
 # Claude Code in the cloud
 
-Phase 1 of [Set it up in the cloud](https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/v5/docs/cloud.md), for Claude Code. Written
+Phase 1 of [Set it up in the cloud](https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/2026.10.26.1/docs/cloud.md), for Claude Code. Written
 for the AI guiding the person. Written against Anthropic's docs read on
 2026-10-16: [Get started with cloud sessions](https://code.claude.com/docs/en/web-quickstart)
 and [Configure cloud environments](https://code.claude.com/docs/en/cloud-environments).
@@ -39,12 +39,12 @@ If a screen differs, those pages win.
    anything, the safest way to watch a first run. Cloud sessions do not
    offer Manual or Bypass modes. Then paste, word for word, the Phase 2
    prompt from
-   https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/v5/docs/cloud.md
+   https://raw.githubusercontent.com/brackenjoe/agent-infrastructure/2026.10.26.1/docs/cloud.md
    as the first message; the session starts when it is sent.
 6. **What they will see.** The session may ask to run `curl` to read the
-   guide; approve it. Then a plan: approve it if it lists the four files
+   guide; approve it. Then a plan: approve it if it lists the five files
    and three questions. It may then ask to run `mkdir` and `curl`
-   commands that create `.claude/agents` and download four files, some
+   commands that create `.claude/agents` and download five files, some
    into `.claude/`; that is expected, approve them.
 
 ## After Phase 2
@@ -52,7 +52,7 @@ If a screen differs, those pages win.
 The session pushes a branch. In the session, the diff indicator (for
 example `+120 -0`) opens the changes; **Create PR** opens a pull request,
 which they merge on GitHub. Sessions started after the merge load the
-manager, the builder and the rules.
+manager, the builder, the reviewer and the rules.
 
 Worth knowing, and worth telling them:
 

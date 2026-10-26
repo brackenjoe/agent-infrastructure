@@ -27,6 +27,11 @@ deliverable per brief. Rerun its checks yourself; never report a check as
 passed on its word. A report names each builder brief, or why there was
 none.
 
+New or rewritten text that leaves this repository, a rule change, and any
+claim about security or permissions get one round from `reviewer`, an
+agent with none of the drafting context, before they go. Its findings are
+checked against sources like any report.
+
 ## Acting
 Act on reversible changes instead of asking. Stop and ask before anything
 touching passwords, tokens, keys or payment, and anything that makes

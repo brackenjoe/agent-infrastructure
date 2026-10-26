@@ -1,23 +1,28 @@
 # What runs here, and why
 
 [Back to the README](../README.md). The setup this guide was written from,
-for anyone who wants to go past one machine. You do not need any of it to
-use the practices in the README.
+in broad strokes, for anyone who wants to go past one machine. You do not
+need any of it to use the practices in the README. Apart from the two
+scripts in [`tools/`](../tools/), none of the files described here are
+published: the agent files and the other tools carry host names, project
+detail and the names of people the work is for. The installable set is
+[`starter/`](../starter/).
 
-It is ten Claude Code agents on a headless Linux box, driven from a phone
-or laptop: a manager that reviews and routes every request, eight domain
-agents, and a cheaper builder that writes code to a settled design.
-Bracken Systems builds drone mission-planning and flight-log tools,
-airframes and RF sensing, with TAK integration, which is why the domain
-agents cover ArduPilot, RF and TAK; yours will cover your own work. The
-rule set and agent files in [`setup/`](../setup/) are the live ones.
+It is Claude Code on a headless Linux box, driven from a phone or laptop,
+running as a Unix user of its own: a manager that reviews and routes every
+request, a cheaper builder that writes code to a settled design, a
+read-only reviewer, and a domain agent for each area of work that kept
+coming back. Bracken Systems builds drone mission-planning and flight-log
+tools, airframes and RF sensing, with TAK integration, which is why the
+domain agents cover ArduPilot, Betaflight, RF and TAK; yours will cover
+your own work.
 
 ## The machines
 
 ```mermaid
 flowchart LR
-  you["You, on a phone or laptop"] -->|"Tailscale SSH, SSH, Remote Control"| agents["agent-server<br/>Claude Code: manager + agents"]
-  agents -->|"push-only deploys over SSH"| web["web-server<br/>your web apps"]
+  you["You, on a phone or laptop"] -->|"Tailscale SSH, SSH, Remote Control"| agents["agent-server<br/>Claude Code: manager + agents<br/>as its own user"]
+  agents -->|"push-only deploys over SSH,<br/>sudo allowlist"| web["web-server<br/>your web apps"]
   agents -->|"push-only deploys over SSH"| sensor["sensor-node<br/>(optional)"]
   web -->|"outbound tunnel,<br/>identity gate"| pub(("Public web"))
   web -->|"TLS 8443 and 8089,<br/>client certificate"| tak["tak-server"]
@@ -26,11 +31,13 @@ flowchart LR
 ```
 
 - **agent-server.** One headless box holds the repo, Claude Code and every
-  agent. You talk to it from a phone or laptop. Nothing reaches into it
-  except you.
+  agent, under a locked account with a sudo allowlist
+  ([the agent as its own user](agent-account.md)). You talk to it from a
+  phone or laptop. Nothing reaches into it except you.
 - **web-server.** Your apps listen on localhost and are published through
   an outbound tunnel with an identity gate in front. The agents deploy to
-  it by pushing over SSH; it holds no key back.
+  it by pushing over SSH as a locked account whose sudo is an allowlist of
+  the deploy's exact commands; it holds no key back.
 - **tak-server.** Receives data packages and Cursor on Target from the web
   server, authenticated by a client certificate. The agent server has no
   network path to it; changes there are made by you, from steps an agent
@@ -48,9 +55,13 @@ what.
 
 - **One box for the agents, reached only by you.** You reach it through
   Remote Control, Tailscale SSH, or sshd with a key; off the LAN, SSH is
-  reachable only over Tailscale. Rebuilding it costs an afternoon, so it
-  stays disposable: its config is captured into git and its disk is
-  imaged ([the agent server](agent-server.md)).
+  reachable only over Tailscale, and ufw drops the rest. Rebuilding it
+  costs an afternoon, so it stays disposable: its config is captured into
+  git and its disk is imaged ([the agent server](agent-server.md)).
+- **The agent is not you.** It has its own Unix account, its own
+  credentials and a short list of what it may run as root. Your keys, your
+  shell and your sudo are out of its reach by file permissions, not by
+  instruction ([the agent as its own user](agent-account.md)).
 - **Deploys push one way.** A target holds no key back, so a compromised
   public machine cannot log in to the agent server, and no tailnet grant
   lets it connect.
@@ -58,82 +69,85 @@ what.
   that does not exist cannot. Where the network leaves a path open (the
   web server to TAK), [the README's table](../README.md#the-rules-and-what-enforces-them)
   says the rule is all that holds it.
-- **People make the changes agents are kept from.** The agent server has
-  no network path to the TAK server, so TAK users and certificates are
-  changed by hand, from steps an agent writes. The web server the agents
-  deploy to with sudo holds the tunnel config and the account
-  certificate, which can create, delete and manage all of the account's
-  tunnels (Cloudflare, Tunnel permissions, read 2026-10-17), so only the
-  stop rule keeps tunnel changes a human job. Cloudflare Access
-  applications are changed in the dashboard.
-- **A domain agent per area that keeps coming back.** Each of the eight
-  covers an area with its own tools and traps, so a new session does not
-  re-learn them. Design, deploys and live hardware stay with them; code to
-  a settled design goes to the builder.
+- **People make the changes agents are kept from.** TAK users and
+  certificates, the tunnel and its identity gate, sshd, Tailscale,
+  sudoers, the firewall, and anything that makes something public.
+- **A domain agent per area that keeps coming back.** Each covers an area
+  with its own tools and traps, so a new session does not re-learn them.
+  Design, deploys and live hardware stay with them; code to a settled
+  design goes to the builder.
 
 ## The agents
 
-| Agent | Model | Software it works with | Used for |
-|---|---|---|---|
-| `manager` | the session's model | Claude Code's agent and worktree tools | The front door: reviews each request, routes it to the agent that fits, or does a few minutes' work itself |
-| `builder` | Sonnet, cannot spawn agents | whatever the brief names: Python, JavaScript, shell, the project's tests | Code to a settled design, one deliverable per brief, inside a fixed list of files |
-| `stl-creator` | Opus | OpenSCAD, CadQuery, `xvfb-run` for PNG previews | Making STL files: a description, photo or measurements in, a parametric model, STL and preview out |
-| `airframe` | Opus | manufacturer thrust tables, weight and endurance budgets | Choosing frames, motors, props and packs; thrust margin and hover time; reading a first hover log |
-| `ardupilot-programmer` | Opus | ArduPilot, Lua scripting, SITL, MAVProxy and MAVLink, ExpressLRS | Anything that runs on or talks to a flight controller: parameter sets, upgrade diffs, onboard scripts |
-| `rf-sensing` | Opus | HackRF (`hackrf_sweep`, receive only), the sensor's own service and page | Receive-only RF detection and direction finding on a sensor node |
-| `tak-sme` | Opus | TAK Server, Cursor on Target, data packages, ATAK and WinTAK | Server users and certificates, what any feed sends, anything that must show on a device |
-| `web-apps` | Opus | FastAPI, Pyodide, Playwright browser checks | Building and deploying the web apps (here, a mission planner and a flight log analyser) |
-| `box-keeper` | Opus | Ubuntu, systemd, tmux, sshd, Tailscale, LVM, Clonezilla | The Linux machines at the OS level: services, access, updates, backups, config captures |
-| `promo` | Opus | Playwright recording, ffmpeg, SITL flights | Clips, stills and caption cards for the apps; it never posts |
+Fourteen. Three are general, and `starter/` carries trimmed copies of all
+three; the rest are this setup's domains, listed so you can see the grain
+at which a domain gets an agent.
 
-`manager` and `builder` are general, and [`starter/`](../starter/) has
-trimmed copies of both. The other eight are this setup's domains: replace
-them with your own.
+| Agent | Model | Area |
+|---|---|---|
+| `manager` | the session's | The front door: reviews each request, routes it to the agent that fits, or does a few minutes' work itself |
+| `builder` | Sonnet, cannot spawn agents | Code to a settled design, one deliverable per brief, inside a fixed list of files |
+| `reviewer` | Opus, cannot edit or spawn | Read-only review by an agent with none of the drafting context: public prose, rule changes, check scripts against their threat model |
+| `box-keeper` | Opus | The Linux machines at the OS level: services, access, updates, backups, config captures; owns the machine record |
+| `web-apps` | Opus | The two web apps and the engines under them, their browser checks, and deploying them |
+| `ardupilot-programmer` | Opus | Anything that runs on or talks to an ArduPilot flight controller: scripts, parameters, SITL, radio firmware |
+| `betaflight` | Opus | The same for Betaflight boards: CLI backups, settings diffs, Blackbox logs, upstream pull requests |
+| `airframe` | Opus | Frames, motors, props and packs; weight and thrust budgets; reading a first hover log |
+| `rf-sensing` | Opus | Receive-only RF detection and direction finding on a sensor node, and any claim about what it heard |
+| `tak-sme` | Opus | TAK Server users and certificates, what any feed sends, anything that must show on a device |
+| `remote-usb` | Opus | USB access from the box to a device in the field, the service for it and its public Android fork |
+| `stl-creator` | Opus | Printable parts: a description, photo or measurements in, a parametric model, STL and preview out |
+| `promo` | Opus | Clips, stills and caption cards for the apps and the site; it never posts |
+| `client-docs` | Opus | Documents that go to one named reader, built as PDF with previews; it never sends anything |
 
-## Using the live set
+Two of the fourteen were created after an independent review found their
+areas without an owner. Each domain agent file is short: where it points
+at the record for its area, what the builder may not have, and nothing a
+README already says.
 
-To start from `setup/` instead of `starter/`:
+## The tools
 
-1. **Copy the rule set.** Put `setup/CLAUDE.md` at your repo root and
-   `setup/.claude/` at `.claude/`. Claude Code reads `CLAUDE.md` in every
-   session and the files in `.claude/agents/` as the agents you can spawn.
-2. **Rewrite `CLAUDE.md` for your machine.** Keep its sections: what the
-   machine is, where things live and which file to read for what,
-   worktrees, scope, delegating, deliverables, when to act and when to
-   stop, pushing. Replace the specifics, and keep it short.
-3. **Keep `manager.md` and `builder.md`; rewrite the domain agents**, as
-   the README's [On one machine](../README.md#on-one-machine) describes.
-   Replace the owner's name and cut the worked examples (the
-   direction-finding builds, the strap channel, Postflight's fixtures);
-   they are this setup's.
+About seventy scripts, each with a row in a tool index that says how to
+invoke it, and a `docs/` folder for the install notes too long for a row.
+By kind:
 
-## Names in setup/
-
-The `setup/` and `tools/` files are copied unedited from the live repo at
-each publish (edit them there, not here), so they use its real names. In
-this guide:
-
-| In `setup/` | In this guide |
-|---|---|
-| `brackenclaudebox`, `~/bracken` | `agent-server`, your repo root |
-| `brackenwebserver`, `ssh webhost` | `web-server` |
-| `brackentakserver` | `tak-server` |
-| `brackensensor1` | `sensor-node` |
-| `BRACKENCLAUDEBOX.md` | the machine record ([skeleton](../examples/machine-record.md)) |
-| `tools/README.md` | the tool index ([skeleton](../examples/tools-README.md)) |
-| `work/<project>/<part>/README.md` | a part's README ([skeleton](../examples/part-README.md)) |
-| Preflight, Postflight | the two web apps: a mission planner and a flight log analyser |
-
-They also reference files that are not published (each project's README,
-the tool index, the machine record); the skeletons show their shape.
+- **Flight controllers.** Parameter dumps and writes over MAVFTP pinned to
+  one board and read back; firmware version and parameter-metadata diffs
+  between trees; SITL launched from a version-matched tree and
+  smoke-tested by flying it; log format diffs; a headless Betaflight CLI
+  with backups tested against SITL first.
+- **Deploys.** One script per service per host, pushing over SSH, running
+  the service's selftest on the target, allowlisted command by command in
+  the target's sudoers.
+- **Captures.** One per host, pulling the hand-made config files into git;
+  each with a list of what it never captures.
+- **Checks.** The repo's own rules checked by script; the agent-file
+  permission rule exercised after each Claude Code update; the public
+  scan before anything leaves; a visibility check that prints `public`,
+  `private` or `ask`; a read-only fleet status row per host; a link
+  checker for the public guide.
+- **Backups.** A nightly encrypted pull of the web server's data; a
+  secrets archive the owner takes by hand; a pre-image checklist that
+  names every credential-bearing file.
+- **Publishing.** The snapshot publish of this guide with its gates
+  ([the GitHub side](github-repo.md)), and a second gate for a public
+  fork of an upstream project.
+- **Documents and media.** PDF builders in the design system, an HTML to
+  PDF renderer with PNG previews, real-browser checks under Playwright,
+  the promo captures.
+- **Third-party trees**, pinned by tag or commit and gitignored: ArduPilot
+  with a worktree per firmware version the fleet runs, Betaflight,
+  ExpressLRS, mLRS, blackbox-tools, gitleaks, lychee.
 
 ## The full build
 
 | Doc | Covers |
 |---|---|
 | [The agent server](agent-server.md) | Ubuntu on LVM, Remote Control at boot, config capture, imaging, what broke |
+| [The agent as its own user](agent-account.md) | the locked account, the sudo allowlist, moving an existing install |
+| [The GitHub side](github-repo.md) | the private repo, the agent's token, rulesets and protection on a public repo, snapshot publishing |
 | [Software on the agent server](software.md) | what each agent uses, where it came from, and what stays off a headless box |
 | [Network and access](network.md) | Tailscale grants, one-way SSH deploy keys |
-| [The web server](web-server.md) | loopback apps behind Cloudflare Tunnel and Access, ufw, deploy by push, the stop rule |
+| [The web server](web-server.md) | loopback apps behind Cloudflare Tunnel and Access, ufw, deploy by push under a sudo allowlist, the stop rule |
 | [TAK Server integration](tak-integration.md) | mission packages and CoT to a TAK Server over mutual TLS, failing closed, testing without a server |
-| [Incidents](incidents.md) | sixteen failures in six weeks, how each was caught, and the rule it produced, if any |
+| [Incidents](incidents.md) | what went wrong, how each was caught, and the rule it produced, if any |

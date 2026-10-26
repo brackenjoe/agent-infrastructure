@@ -108,8 +108,8 @@ jobs:
           fail=0
           while IFS= read -r f; do
             case "$f" in
-              setup/*|tools/*)
-                echo "::error file=$f::setup/ and tools/ are copies of the maintainer's live files and are overwritten at each publish; describe the change in an issue instead"
+              tools/*)
+                echo "::error file=$f::tools/ holds copies of the maintainer's live scripts and is overwritten at each publish; describe the change in an issue instead"
                 fail=1 ;;
               docs/cloud.md|docs/claude-code-cloud.md|docs/codex-cloud.md|starter/*)
                 echo "::warning file=$f::versioned page: it is released under the next tag, and the maintainer updates its links" ;;

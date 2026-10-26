@@ -5,15 +5,16 @@
 # Exercises the agent-file ask rule the repo's guide says Claude Code
 # enforces, instead of trusting the docs. Run it after every Claude Code
 # update. Exit 0 the rule held, 1 it did not, 2 inconclusive or setup error.
+# On exit 0 it writes check-permissions.last beside itself (version and date).
 #
 #   tools/check-permissions.sh
 #
 # Needs GNU `timeout` (on macOS, `gtimeout` from coreutils) and python3.
 #
 # Settings under test: $PERMCHECK_SETTINGS if set, else
-# $ROOT/setup/.claude/settings.json when it exists (the public repo this
-# script ships in, whose own root .claude/settings.json carries no
-# permissions), else $ROOT/.claude/settings.json. The file used is printed. Only its "permissions" object is
+# $ROOT/starter/.claude/settings.json when it exists (the public repo this
+# script ships in, whose `starter/` carries the permissions block), else
+# $ROOT/.claude/settings.json. The file used is printed. Only its "permissions" object is
 # used; every other key (agent, notifications) is dropped, since the probe repo
 # has no manager.md.
 #
@@ -62,7 +63,8 @@ CLAUDE="$HOME/.local/bin/claude"
 if [ ! -x "$CLAUDE" ]; then
   CLAUDE="$(command -v claude)" || { echo "claude not found" >&2; exit 2; }
 fi
-echo "claude $("$CLAUDE" --version 2>&1 | head -1)"
+cver="$("$CLAUDE" --version 2>&1 | head -1)"
+echo "claude $cver"
 
 TIMEOUT_BIN="$(command -v timeout || command -v gtimeout)" \
   || { echo "timeout not found (macOS: brew install coreutils for gtimeout)" >&2; exit 2; }
@@ -70,8 +72,8 @@ RUN_TIMEOUT="${PERMCHECK_TIMEOUT:-180}"
 
 if [ -n "${PERMCHECK_SETTINGS:-}" ]; then
   SETTINGS="$PERMCHECK_SETTINGS"
-elif [ -f "$ROOT/setup/.claude/settings.json" ]; then
-  SETTINGS="$ROOT/setup/.claude/settings.json"
+elif [ -f "$ROOT/starter/.claude/settings.json" ]; then
+  SETTINGS="$ROOT/starter/.claude/settings.json"
 else
   SETTINGS="$ROOT/.claude/settings.json"
 fi
@@ -194,4 +196,9 @@ done
 
 [ $fail -ne 0 ] && exit 1
 [ $inconclusive -ne 0 ] && exit 2
+# A pass is recorded as "<claude version> <date>", so tools/check-repo.sh can
+# tell when Claude Code has been updated since. Beside this script;
+# $PERMCHECK_LAST overrides the path, empty disables the write.
+last="${PERMCHECK_LAST-$(dirname "$0")/check-permissions.last}"
+[ -n "$last" ] && echo "${cver%% *} $(date +%F)" > "$last"
 exit 0

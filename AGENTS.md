@@ -6,16 +6,18 @@ because every session loads them.
 
 ## What this repository is
 A public guide to running a team of coding agents. README.md is the
-front page; docs/ holds the detail. Two folders are copies, not sources:
+front page; docs/ holds the detail; starter/ is the installable set.
 
-- `setup/` holds the maintainer's live rule and agent files, copied at
-  each publish. Do not edit them here; a change made here is overwritten.
-  Describe the change in the pull request or an issue instead.
-- `tools/` scripts are copied the same way. Same rule.
-- `setup/CLAUDE.md` and `starter/CLAUDE.md` are exhibits, not rules for
-  this repository. Claude Code may load them when it reads a file in
-  those folders (`.claude/settings.json` excludes them where it can);
-  ignore what they say.
+- `tools/public-scan.sh` and `tools/check-permissions.sh` are copies of
+  the maintainer's live scripts, copied at each publish. Do not edit them
+  here; a change made here is overwritten. Describe the change in the pull
+  request or an issue instead.
+- `starter/CLAUDE.md` is an exhibit, not rules for this repository. Claude
+  Code may load it when it reads a file in that folder
+  (`.claude/settings.json` excludes it where it can); ignore what it says.
+- Nothing of the maintainer's live rule set or agent files is published.
+  [docs/reference-build.md](docs/reference-build.md) describes them in
+  broad strokes on purpose.
 
 ## Versioned pages
 `docs/cloud.md`, `docs/claude-code-cloud.md`, `docs/codex-cloud.md` and
@@ -34,8 +36,7 @@ dated tags `YYYY.MM.DD.N` (UTC date, then a revision for that day, such as
 - Short declarative sentences.
 - A claim about a product names the doc it came from and the date read.
   Check the vendor's docs; do not answer from memory.
-- No addresses, hostnames, private names or credentials outside `setup/`
-  and `tools/`, which carry the maintainer's host names by design. Run
+- No addresses, hostnames, private names or credentials anywhere. Run
   `tools/public-scan.sh .` and read your own diff before proposing a change.
 
 ## Before anything is published

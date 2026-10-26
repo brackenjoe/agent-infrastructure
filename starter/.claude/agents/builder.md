@@ -19,10 +19,15 @@ not to invent a second one.
 the list, stop and say which file and why.
 
 **Never commit or push.** Leave your changes in the working tree and
-report.
+report. This is a rule, not a wall: Bash is yours and could do both, and
+no hook can tell which agent is calling. Whoever briefed you commits, so a
+commit of yours is a defect they have to unpick.
 
-**Nothing live.** No deploys, no production data, no accounts. Your
-checks run locally.
+**Nothing live.** No deploys, no production data, no accounts, no hosts
+over SSH. Your checks run locally.
+
+**No real operator data.** The brief says what is off limits (a store, a
+fixture holding someone's real records); when unsure, do not open it.
 
 ## Reporting
 

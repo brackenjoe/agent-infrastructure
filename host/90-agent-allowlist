@@ -1,0 +1,95 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Joe Fernandez
+#
+# /etc/sudoers.d/90-agent-allowlist on the agent server: what the agent's
+# account may run as root, with no password. The agent (`claude` below) is a
+# locked account, not in `sudo`, `adm` or `lxd`; the operator is a different
+# user and keeps full root through "%sudo ALL=(ALL:ALL) ALL" in /etc/sudoers,
+# with a password. Nothing here names the operator.
+#
+# Threat model: this narrows accidents (a stray "sudo systemctl restart ssh",
+# "sudo tailscale down", "sudo ufw disable"), not a hostile agent. apt-get
+# install by package name is still one step from root by construction: a
+# package's maintainer scripts run as root. Nothing else here installs or
+# starts what root runs.
+#
+# Every command spec is a POSIX extended regular expression (^...$), which
+# needs sudo 1.9.10 or later (1.9.15p5 here). A spec is checked by running
+# `sudo -n -l <command>` as the agent, which prints the command if it would
+# be allowed and runs nothing. The first version of this file (2026-10-24)
+# allowed four things it meant to refuse, found by a cold review on
+# 2026-10-26 and confirmed with that command:
+#   - `systemctl -p status restart ssh`: a leading option with an argument
+#     let any verb follow. The verb now comes first, and only argument-free
+#     flags from a fixed list may surround it.
+#   - `apt-get -y install openssh-server-`: a trailing `-` is apt's remove
+#     syntax, and `-y` also removes a conflicting package. A name now ends
+#     on a letter, digit or `+`, and `--no-remove` is required.
+#   - `journalctl --vacuum-time=1s`, `dmesg -C`: not reads. Long options are
+#     now a fixed list and dmesg's flags a fixed set.
+#   - `ss -K`: closes sockets, SSH and Tailscale included. `K` is out.
+# A second pass the same day, before any host ran the corrected forms,
+# matched them with the C library's regcomp (REG_EXTENDED), the engine sudo
+# uses, against the arguments joined by single spaces, as sudo joins them.
+# It found three more:
+#   - An empty argument: `journalctl -u ssh "" --vacuum-time=1s` joins to a
+#     double space, and a free argument written `[^-][^ ]*` matched the
+#     second space and then the option. Free arguments now begin `[^- ]`.
+#     That sudo keeps the double space was measured: `apt-get -s install ""
+#     shellcheck` is refused where `apt-get -s install shellcheck` lists.
+#   - `ss -D FILE` writes a file as root and `ss -F FILE` reads one. D and
+#     F are out with K; filter words such as `sport = :22` are allowed.
+#   - `install name=version-`: a version could end in `-`. It cannot now.
+# dmesg's -H is out too: it starts a pager, and a pager run as root can
+# start a shell.
+# A name ending in .deb with no slash is read as a package name, not a file
+# (apt 2.8.3, measured with a real .deb named foo.deb in the directory);
+# `./foo.deb` is read as a file, and the name class refuses it. A name that
+# is no package is tried as a glob and then a regex, so `install s.l`
+# selects many packages: still installs only, and --no-remove stops a run
+# that would remove one.
+#
+# Alias names must differ from every other file's under /etc/sudoers.d: two
+# files defining the same alias do not parse, and a tree that does not parse
+# leaves sudo refusing everything (visudo 1.9.15p5, measured 2026-10-24).
+#
+# Install (operator, root shell held open until proven from a second login):
+#   cat /etc/sudoers.d/<existing> 90-agent-allowlist | visudo -cf -
+#   install -m 0440 -o root -g root 90-agent-allowlist /etc/sudoers.d/90-agent-allowlist
+#   visudo -c
+# Then, from a second login: `sudo -v` as the operator asks for the password;
+# as the agent, `sudo -n -l` prints these forms, `sudo -n /usr/bin/id` is
+# refused, and so is each form named above. docs/agent-account.md has the
+# steps.
+
+# Reads. systemd 255 runs its pager in secure mode under sudo.
+Cmnd_Alias AGENT_READ = \
+    /usr/bin/systemctl ^((--no-pager|--no-legend|--all|--full|--plain|-a|-l) )*(status|is-active|is-enabled|is-failed|show|cat|list-units|list-unit-files|list-timers|list-dependencies)( (--no-pager|--no-legend|--all|--full|--plain|-a|-l|[^- ][^ ]*))*$, \
+    /usr/bin/journalctl ^((-[a-zA-Z0-9]+|--(no-pager|no-hostname|quiet|since|until|unit|user-unit|grep|lines|boot|list-boots|output|reverse|follow|priority|identifier|disk-usage)(=[^ ]*)?|[^- ][^ ]*)( (-[a-zA-Z0-9]+|--(no-pager|no-hostname|quiet|since|until|unit|user-unit|grep|lines|boot|list-boots|output|reverse|follow|priority|identifier|disk-usage)(=[^ ]*)?|[^- ][^ ]*))*)?$, \
+    /usr/bin/ss ^((-[a-zA-CEG-JL-Z0-9]+|[^- ][^ ]*)( (-[a-zA-CEG-JL-Z0-9]+|[^- ][^ ]*))*)?$, \
+    /usr/bin/dmesg ^(-[TkxeLtuS]+( -[TkxeLtuS]+)*)?$, \
+    /usr/sbin/lvs, /usr/sbin/vgs, /usr/sbin/pvs, \
+    /usr/sbin/ufw status, /usr/sbin/ufw status verbose, /usr/sbin/ufw status numbered, /usr/sbin/ufw show added, \
+    /usr/sbin/sshd -T, /usr/sbin/sshd -t, \
+    /usr/bin/test -r /etc/ufw/user.rules, /usr/bin/test -r /etc/ufw/user6.rules, \
+    /usr/bin/cat /etc/ufw/user.rules, /usr/bin/cat /etc/ufw/user6.rules, \
+    /usr/bin/apt-get ^-s (install|upgrade|full-upgrade|dist-upgrade|autoremove|remove|purge)( --purge)?( [a-z0-9][a-z0-9.+:=~*-]*)*$, \
+    /usr/bin/true
+
+# Packages by name only: no "-o" (an apt option can run a command), no
+# local .deb path, no remove or purge (that could take openssh-server or
+# tailscale), no trailing "-" on a name or a version (apt's remove
+# syntax), and --no-remove so a conflicting package aborts the run instead
+# of being removed.
+Cmnd_Alias AGENT_APT = \
+    /usr/bin/apt-get ^(-qq? )?update( -qq?)?$, \
+    /usr/bin/apt-get ^(-y |-qq? |--no-install-recommends )*--no-remove install( [a-z0-9]([a-z0-9.+-]*[a-z0-9+])?(:[a-z0-9]+)?(=[A-Za-z0-9.+:~-]*[A-Za-z0-9.+:~])?)+$
+
+# One alias per service the agent operates but does not install: its exact
+# start/stop/restart forms and the reads its checks make. Installing or
+# changing what root runs (files under /opt or /etc, unit or udev files,
+# systemd-run with a free command) stays the operator's, with a password.
+# Cmnd_Alias AGENT_MYSERVICE = \
+#     /usr/bin/systemctl ^(start|stop|restart|reset-failed) myservice([.]service)?$
+
+claude ALL=(root) NOPASSWD: AGENT_READ, AGENT_APT

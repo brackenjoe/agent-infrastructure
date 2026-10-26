@@ -21,13 +21,13 @@ Put every machine on one Tailscale network. Join each server with a tagged auth 
 }
 ```
 
-Nothing grants `tag:agents` a path to `tag:tak`; check the TAK server from your own device. The `ssh` block lets your phone or laptop use Tailscale SSH into the agent server (`tailscale up --ssh`); `autogroup:nonroot` lets any account but root on the target log in; name the account instead where you can (Tailscale, Tailscale SSH and policy file reference, read 2026-10-17).
+Nothing grants `tag:agents` a path to `tag:tak`; check the TAK server from your own device. The `ssh` block lets your phone or laptop use Tailscale SSH into the agent server (`tailscale up --ssh`); `autogroup:nonroot` lets any account but root on the target log in, which with [the agent as its own user](agent-account.md) means both your account and the agent's; name the accounts you mean instead (Tailscale, Tailscale SSH and policy file reference, read 2026-10-17). Whether that list includes the agent's account decides how you reach its terminals.
 
 - A tagged node is not `autogroup:member`. A rule with that source never matches your servers (Tailscale, Kubernetes operator Funnel page, read 2026-10-17).
 - An `ssh` block is not network access, and does nothing unless the target runs Tailscale SSH. The web server here does not; it uses system sshd over the tcp:22 grant.
 - Taildrop refuses tagged nodes (Tailscale, Taildrop, read 2026-10-17). Pull files over SFTP (Termius on the phone, here).
 
-**SSH.** On each target, create `deploy` with `adduser --disabled-password`, holding one key made for that target alone. Here it has passwordless sudo, because deploys install root-owned code and units; a narrower sudoers file is not tested here. Revoke by deleting its line from `~deploy/.ssh/authorized_keys`. On the agent server:
+**SSH.** On each target, create `deploy` with `adduser --disabled-password`, holding one key made for that target alone. Its sudo is an allowlist of the deploy's exact commands, not `NOPASSWD: ALL` ([the web server](web-server.md#the-deploy-account)). Revoke by deleting its line from `~deploy/.ssh/authorized_keys`. On the agent server:
 
 ```
 Host web-server

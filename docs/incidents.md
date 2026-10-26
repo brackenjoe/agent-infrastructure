@@ -1,13 +1,21 @@
 # Incidents, and the rules they produced
 
-[Back to the README](../README.md). Most rules in [`setup/`](../setup/) exist
-because something went wrong first. These are fifteen that produced a
-rule and one that has not yet, from six weeks of running this setup
-(September and October 2026), newest first. Security details are left
-out; the rule each one produced is in the live files.
+[Back to the README](../README.md). Most rules in this setup exist because
+something went wrong first. These are twenty-two that produced a rule and
+one that has not yet, from eight weeks of running it (September to late
+October 2026), newest first. Security details are left out; the rule each
+one produced is in the live files, and where the guide carries it, the
+row links there.
 
 | Date | What went wrong | How it was caught | Rule now |
 |---|---|---|---|
+| 2026-10-25 | A deferred-reboot script that reboots only when nobody is logged in had never rebooted the box: a display manager left from an abandoned experiment holds a permanent greeter session on a headless server, so every pending reboot for ten days was deferred on "1 login session". | Writing the runbook for the user split, which reads the script's journal rather than its timer status | The script leaves `Class=greeter` sessions out; a timer that has never fired is checked in its journal, not by `systemctl status`. |
+| 2026-10-24 | The sudo allowlist for the agent's new account was written as a second file under `/etc/sudoers.d` defining the same alias names as the first. Two such files do not parse, `visudo -cf` on the new file alone passes, and a tree that does not parse leaves sudo refusing every command on a box nobody sits at. | `visudo -cf` of the two files concatenated, run before anything was installed | Aliases named apart; the pair checked together; the new file installed beside the old, with a root shell held open until a second login proves both accounts ([the agent as its own user](agent-account.md)). |
+| 2026-10-24 | A nightly root timer ran its backup script straight out of the agent's checkout, so the agent could edit what root runs next: one step to root, outside the sudo allowlist. | Inventorying every file that named the agent's home directory, for the user split | Root runs root-owned copies in `/usr/local/sbin`, installed by an installer that refuses an uncommitted source. |
+| 2026-10-26 | The sudo allowlist written for the agent's account allowed four things its comments said it refused: `systemctl -p status restart ssh` (a leading option with an argument let any verb follow), `apt-get -y install openssh-server-` (apt's remove syntax), `journalctl --vacuum-time=1s` and `ss -K`. | The cold review of this guide's page about it, reading the regular expressions and probing the installed copy with `sudo -n -l`, which lists and runs nothing | The verb comes first and flags are fixed lists; package names cannot end in `-` and `--no-remove` is required; the probes to refuse are written in the file's header and run after every install ([the agent as its own user](agent-account.md#the-sudo-allowlist)). |
+| 2026-10-24 | The agent and the operator were one Unix user. The agent could add a key to `authorized_keys`, put a `sudo` first on the operator's `PATH`, and read the operator's shell history: every path in that the stop rule exists to protect was a file the agent owned. | An independent review of the records: a fresh session with the same brief as the first review and no sight of its findings | The agent runs as a locked account of its own with a sudo allowlist; the operator's account runs no agent ([the agent as its own user](agent-account.md)). |
+| 2026-10-23 | The harness's own description of the trusted repository, read by its permission classifier in auto mode, had been auto-generated and was stale: it described the home directory, with no tracked files and no remotes, as the repository. | A review of the records by a fresh session, the first of the two | Rewritten by hand with the real repository, its visibility, the deploy targets and the sensitive paths; captured into git with the other dotfiles. |
+| 2026-10-23 | ufw was installed with its unit enabled and `ENABLED=no`, so it had never been active. sshd answered on every interface, port 22 included on the box's global IPv6 address. The record said the firewall was on. | The same first review, reading `ufw status` | A firewall is enabled behind a timed revert, proven by a connection from another host and a logged block, then the revert disarmed; the capture takes the ufw rules so the record cannot say otherwise ([the agent server](agent-server.md)). |
 | 2026-10-17 | A new pull-request check that runs gitleaks was run against test pull requests and reported ready to publish. It could pass having scanned nothing: gitleaks logs git's errors (a missing base commit, an ambiguous ref) and still exits 0. Its comments did not say what the scan skips, or that it is not built for a pull request made to hide something. | The existing rule that claims about security get a cold review: two reviews by agents with none of the drafting context, before the push. The second found a `.gitattributes` that hides every diff from the scan. Each finding was reproduced, fixed and rerun. | A scanner's exit code is not evidence it scanned: the check reads its output and fails an empty or erroring scan. |
 | 2026-10-16 | A builder's test commit, titled "feat" and adding a one-line file named `f`, landed in the guide's source folder in the private repo. The builder is told never to commit; that is an instruction, not a permission. | Reading the publish stage before the push. Reverted; never public. | None yet. The instruction stands, and the publish step shows every file for the owner to read before anything is pushed. |
 | 2026-10-16 | The first version of `tools/check-permissions.sh` could report a pass with no evidence that anything had been refused. The revision that fixed it claimed, from the docs' protected-paths list, that the built-in protection skips agent files in worktree copies. Measured on 2.1.289, it refuses them. | A read-only review by an agent with none of the drafting context, in two passes, before the push | The script needs a recorded denial and a negative control, or it reports inconclusive. The worktree claim was measured and corrected, and `tools/check-permissions.sh` runs after every Claude Code update. |
@@ -29,17 +37,26 @@ out; the rule each one produced is in the live files.
 
 1. **A claim from reasoning or a single negative, not a measurement:** the
    reachability claim, the predicted audit findings, the watchdog, the
-   upgrade theory, the first enforcement table.
+   upgrade theory, the first enforcement table, the firewall that was
+   "on", the stale repository description, the allowlist whose comments
+   described what its regular expressions did not do.
 2. **A check that existed but did not exercise the act:** the
    guarded-looking delete, the `active` service, the result read from a
    report, the permission check that could pass without a refusal, the
-   secret scan that could pass without scanning.
+   secret scan that could pass without scanning, the reboot timer that
+   never fired, `visudo -cf` on one file.
 3. **Cost from routing, not capability:** the most expensive failure was not
    a wrong answer but the right work done by the wrong model.
-4. **An instruction, not a permission:** the builder's commit. The table of
+4. **An instruction, not a permission:** the builder's commit, and for six
+   weeks the whole stop rule, while the agent owned every file it was told
+   not to touch. The table of
    [what enforces which rule](../README.md#the-rules-and-what-enforces-them)
-   is the short list of rules that are not like this.
+   is the short list of rules that are not like this; the user split
+   moved the stop rule's paths onto it.
 
 The cheap, bounded builders checked the stronger orchestrator more often
 than the reverse, because their file lists made them measure before they
-could change anything.
+could change anything. The two reviews of the records by fresh sessions
+with none of the context found the three security items of 2026-10-23
+and 10-24 that six weeks of the setup's own checks had not, and the cold
+review of this guide found the fourth.

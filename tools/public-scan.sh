@@ -15,7 +15,9 @@
 # written as a Markdown backslash escape or an HTML character reference, which
 # a page renders as a plain address. The password pattern is case-insensitive and
 # takes a quoted key and value, so a JSON field and an upper-case shell
-# variable are caught as well as a plain assignment.
+# variable are caught as well as a plain assignment. Its one exemption is the
+# sudoers keyword NOPASSWD (upper case, exactly): `NOPASSWD: ALIAS` passes,
+# `nopassword=x`, `NOPASSWORD=x` and `NoPasswd: x` do not.
 # Token shapes beyond the vendor-prefixed ones: OpenAI-style, Google API, npm and
 # GitLab keys, an Authorization Bearer value, and an assigned API key (a value
 # that starts with $, <, { or % is a placeholder and passes).
@@ -51,7 +53,7 @@ Slack token|xox[abpr]-[A-Za-z0-9-]{10,}
 Tailscale auth key|tskey-[a-z]+-[A-Za-z0-9-]{10,}
 private key block|BEGIN [A-Z ]*PRIVATE KEY
 WiFi PSK|psk[=]
-assigned password|P|(?i)(password|passwd|secret)["\x27]?\s*[:=]\s*["\x27]?[^\s"\x27]{4,}
+assigned password|P|(?i)((?<!(?-i:NO))passwd|password|secret)["\x27]?\s*[:=]\s*["\x27]?[^\s"\x27]{4,}
 Cloudflare tunnel credentials|Tunnel[S]ecret|Account[T]ag
 IPv6 address|P|(?i)(?<![0-9a-f:])(?!2001:0*db8:)(?:[23][0-9a-f]{3}|fd[0-9a-f]{2})(?::{1,2}[0-9a-f]{1,4}){2,}(?![0-9a-f])
 MAC address|P|(?i)(?<![0-9a-f])(?!00(?::00){5}(?![0-9a-f]))(?!ff(?::ff){5}(?![0-9a-f]))(?:[0-9a-f]{2}:){5}[0-9a-f]{2}(?![0-9a-f])

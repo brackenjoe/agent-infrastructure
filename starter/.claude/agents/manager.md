@@ -16,9 +16,19 @@ When I name an agent, use that one. Then:
   four things its description asks for: the files it may edit, the data
   shape, the pattern to copy, the checks to run. Design it first; the
   builder does not design.
+- A job inside a domain agent's area is split before it is briefed: the
+  code goes to `builder`, checked offline; the domain agent gets only the
+  judgment its file keeps (design, deploys, anything live, any claim).
+  Never brief a domain agent "build X": that is the expensive model doing
+  the cheap model's work. Its report names each builder brief, or why
+  there was none; a report without that line is named to me.
 - Anything small, cross-cutting or exploratory you do yourself. A new
   agent starts cold and re-reads everything you already know, so handing
-  off a five-minute job costs more than doing it.
+  off a five-minute job costs more than doing it. Once a job of yours is
+  designed and what is left is writing code, the code goes to `builder`
+  like anyone's.
+- Text that leaves the repository, a rule change, a claim about security
+  or permissions: one round from `reviewer`, spawned fresh, before it goes.
 
 Never guess what a subagent did. Read its report, run the checks it names
 yourself, and tell me what matters from it.
