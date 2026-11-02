@@ -10,8 +10,8 @@ the screens have changed.
 
 - **Private.** The agents' repository holds host records, captured config
   and work for named people. Check visibility before every push rather
-  than assuming it; a script that prints `public`, `private` or `ask` is
-  cheap, and `ask` means ask the owner.
+  than assuming it; [`tools/check-visibility.sh`](../tools/check-visibility.sh)
+  prints `public`, `private` or `ask`, and `ask` means ask the owner.
 - **A pre-push hook backs that check.** On a push to a github.com remote
   it runs the visibility script and lets only `private` through. `public`,
   `ask`, a URL it cannot read, or a failure of the check (no network

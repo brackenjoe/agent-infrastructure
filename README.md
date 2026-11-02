@@ -166,7 +166,11 @@ The starter is what the cloud walkthrough installs. As it grows:
   anything untracked sits at the repo root. It is tied to our layout and
   not published; the list is the point. Run
   [`tools/check-permissions.sh`](tools/check-permissions.sh) after each
-  Claude Code update. Before any push to a public remote, run
+  Claude Code update. Before any push, run
+  [`tools/check-visibility.sh`](tools/check-visibility.sh) `OWNER REPO`, with
+  the names from the remote's URL (a misspelt repo reads `private`): `ask`
+  means stop and ask the owner, and `public` needs the owner's approval;
+  before a push to a public remote, run
   [`tools/public-scan.sh`](tools/public-scan.sh) on the directory you will
   push (`tools/public-scan.sh .`), have `reviewer` read the new prose, and
   read the diff anyway.
@@ -261,6 +265,8 @@ user split moved them onto this table.
 - `tools/public-scan.sh`: scan a directory before you push it anywhere public
 - `tools/check-permissions.sh`: check the agent-file ask rule still holds,
   in a throwaway repo
+- `tools/check-visibility.sh`: is a GitHub repo `public`, `private`, or
+  `ask` the owner; `--selftest` runs offline
 - `.github/workflows/check.yml`: on every pull request, the public scan,
   gitleaks, relative links, and no edits to `tools/`
 - `AGENTS.md`, `CLAUDE.md`: the rules any agent follows when editing this

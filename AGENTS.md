@@ -8,7 +8,8 @@ because every session loads them.
 A public guide to running a team of coding agents. README.md is the
 front page; docs/ holds the detail; starter/ is the installable set.
 
-- `tools/public-scan.sh` and `tools/check-permissions.sh` are copies of
+- `tools/public-scan.sh`, `tools/check-permissions.sh` and
+  `tools/check-visibility.sh` are copies of
   the maintainer's live scripts, copied at each publish. Do not edit them
   here; a change made here is overwritten. Describe the change in the pull
   request or an issue instead.
