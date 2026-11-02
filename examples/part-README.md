@@ -27,4 +27,8 @@ state, not a diary; dated history goes in git or a `CHANGELOG.md` beside it.
 
 ## Not done
 
-- What is known missing, and what would trigger doing it.
+Open items only. A line moves to `CHANGELOG.md` the day it is done, so
+this list never reads as a mix of done and not done.
+
+- What is known missing, and its trigger or its owner: the event that
+  starts it, or the person it waits on.

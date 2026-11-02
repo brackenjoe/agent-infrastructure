@@ -21,6 +21,14 @@
 # Token shapes beyond the vendor-prefixed ones: OpenAI-style, Google API, npm and
 # GitLab keys, an Authorization Bearer value, and an assigned API key (a value
 # that starts with $, <, { or % is a placeholder and passes).
+# A Cloudflare Artifacts git token (art_v<N>_ and 20 or more token characters;
+# the bare prefix in prose passes) and a password in a URL of any scheme
+# (scheme://user:<secret>@host, user may be empty; a password that starts with
+# $, <, {, a backslash or *, or is the format directive %s, is a placeholder and
+# passes. The password ends at white space, / ? # @ and a quote or angle bracket,
+# so a port followed by a query string, or by markup and an @, is not read as
+# one; a percent-encoded password (%40...) is a real one. Other gates hold a
+# copy of this expression; a test keeps the copies equal.)
 #
 # Deny list: each non-empty, non-# line of $PUBLIC_SCAN_DENY (default:
 # public-scan.deny beside this script) is a term, matched case-insensitively
@@ -55,6 +63,8 @@ private key block|BEGIN [A-Z ]*PRIVATE KEY
 WiFi PSK|psk[=]
 assigned password|P|(?i)((?<!(?-i:NO))passwd|password|secret)["\x27]?\s*[:=]\s*["\x27]?[^\s"\x27]{4,}
 Cloudflare tunnel credentials|Tunnel[S]ecret|Account[T]ag
+Cloudflare Artifacts token|P|(?<![A-Za-z0-9])art_v[0-9]+_[A-Za-z0-9_-]{20,}
+credentials in URL|P|[A-Za-z][A-Za-z0-9+.-]*://[^\s/?#@:]*:(?![$<{\\*]|%s)[^\s/?#@"\x27<>]{4,}@
 IPv6 address|P|(?i)(?<![0-9a-f:])(?!2001:0*db8:)(?:[23][0-9a-f]{3}|fd[0-9a-f]{2})(?::{1,2}[0-9a-f]{1,4}){2,}(?![0-9a-f])
 MAC address|P|(?i)(?<![0-9a-f])(?!00(?::00){5}(?![0-9a-f]))(?!ff(?::ff){5}(?![0-9a-f]))(?:[0-9a-f]{2}:){5}[0-9a-f]{2}(?![0-9a-f])
 '

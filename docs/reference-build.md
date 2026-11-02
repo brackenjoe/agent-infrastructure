@@ -139,6 +139,31 @@ By kind:
   with a worktree per firmware version the fleet runs, Betaflight,
   ExpressLRS, mLRS, blackbox-tools, gitleaks, lychee.
 
+## Under evaluation
+
+- **Cloudflare's security-audit skill**
+  ([cloudflare/security-audit-skill](https://github.com/cloudflare/security-audit-skill),
+  MIT, commit `c1c8a8c`, read 2026-11-01). A method for a parent agent:
+  it spawns reconnaissance, hunter, verifier and critic agents over a
+  source tree and keeps a coverage ledger that a script validates. One
+  `quick` pass on one of the two web apps, reading source only, covered
+  14 of 29 units and deferred 6. It found six leads that the app's
+  selftests and two earlier reviews had missed. None was confirmed by
+  running code; each held on a read of the source, and all six were fixed
+  and deployed on 2026-11-02. It looks beneficial: the verdict is to keep
+  it for a second pass.
+- **How it runs here.** The manager is the parent, in a fresh session,
+  because only the manager spawns agents other than the builder. The
+  first pass ran every agent on the session's model and spent more than
+  1.6 M tokens; the second will run the hunters and verifiers on Sonnet
+  from written briefs. The skill is installed for the run and removed
+  after: its description matches any security question, so a standing
+  install would change every agent's security answers. The `reviewer`
+  read it before the first run, and reads any bump of the pinned commit.
+  Without an OS sandbox nothing of the target runs, and every lead stays
+  unconfirmed. A sandbox for it is built and waits on one host change by
+  the owner.
+
 ## The full build
 
 | Doc | Covers |

@@ -12,6 +12,21 @@ the screens have changed.
   and work for named people. Check visibility before every push rather
   than assuming it; a script that prints `public`, `private` or `ask` is
   cheap, and `ask` means ask the owner.
+- **A pre-push hook backs that check.** On a push to a github.com remote
+  it runs the visibility script and lets only `private` through. `public`,
+  `ask`, a URL it cannot read, or a failure of the check (no network
+  answers `ask`) is refused with the reason. The owner's approval goes on
+  the command as an environment variable. Set `core.hooksPath` globally on
+  the server, so a fresh clone is covered too. A push to a remote that is
+  not on GitHub passes.
+- **Its limits.** It catches an agent's mistake; it is not a wall.
+  `--no-verify` skips it. A repository's own `core.hooksPath`, or one
+  given with `git -c`, replaces the global one, so check fork checkouts
+  and projects whose install sets one. A GitHub remote reached through an
+  SSH host alias is not recognised as GitHub and passes. Here `ask` rules
+  in the agents' permission settings are meant to prompt on the approval
+  variable and on `--no-verify`; as of 2026-11-02 they are written but not
+  yet seen to prompt, so exercise yours before relying on them.
 - **One owner merges.** Cloud sessions push their own branches and the
   owner merges; on the server the agents commit to `main` and push. Nothing
   is force-pushed.
