@@ -150,19 +150,20 @@ By kind:
   14 of 29 units and deferred 6. It found six leads that the app's
   selftests and two earlier reviews had missed. None was confirmed by
   running code; each held on a read of the source, and all six were fixed
-  and deployed on 2026-11-02. It looks beneficial: the verdict is to keep
-  it for a second pass.
+  and deployed on 2026-11-02. It looked beneficial, and it stayed in
+  use: the sandboxed runs since confirm findings by running code.
 - **How it runs here.** The manager is the parent, in a fresh session,
   because only the manager spawns agents other than the builder. The
   first pass ran every agent on the session's model and spent more than
-  1.6 M tokens; the second will run the hunters and verifiers on Sonnet
-  from written briefs. The skill is installed for the run and removed
+  1.6 M tokens; the second, on 2026-11-02, ran the hunters and verifiers
+  on Sonnet from written briefs. The skill is installed for the run and removed
   after: its description matches any security question, so a standing
   install would change every agent's security answers. The `reviewer`
   read it before the first run, and reads any bump of the pinned commit.
   Without an OS sandbox nothing of the target runs, and every lead stays
-  unconfirmed. A sandbox for it is built and waits on one host change by
-  the owner.
+  unconfirmed. The sandbox went live on 2026-11-02, once the owner
+  installed the distribution's AppArmor profile for bwrap; target code
+  runs only after its selfcheck proves each of its 20 controls.
 
 ## The full build
 

@@ -25,8 +25,13 @@ the screens have changed.
   and projects whose install sets one. A GitHub remote reached through an
   SSH host alias is not recognised as GitHub and passes. Here `ask` rules
   in the agents' permission settings are meant to prompt on the approval
-  variable and on `--no-verify`; as of 2026-11-02 they are written but not
-  yet seen to prompt, so exercise yours before relying on them.
+  variable and on `--no-verify`. On 2026-11-02 (Claude Code 2.1.316, auto
+  mode) a compound command ending in a dry-run push carrying the approval ran
+  without a prompt, and so did the `--push` publish below. The cause is
+  not yet known: auto mode passing ask rules, the variable in front of the
+  command, or the compound command. The `--push` case has no variable in
+  front, which speaks against the second. Exercise yours before relying on
+  them.
 - **One owner merges.** Cloud sessions push their own branches and the
   owner merges; on the server the agents commit to `main` and push. Nothing
   is force-pushed.
@@ -105,7 +110,11 @@ the API rather than exercised, since a test push would be a public act.
   prints the files that change and an approval hash over the target, the
   base commit, the tree and the message; `--push <hash>` rebuilds, reruns
   everything and pushes only that. The owner's own settings allow the dry
-  run and put every `--push` behind an ask rule. A sync guard stops the
+  run and put every `--push` behind an ask rule, which did not prompt in
+  auto mode on 2026-11-02 (above). The approval hash is an unkeyed
+  checksum of the target, base, tree and message: it makes sure what is
+  pushed is what the dry run showed, and approves nothing. The ask rule is
+  the only approval. A sync guard stops the
   dry run when public `main` has moved (a merged pull request), until the
   change is brought into the private source.
 - **Release tags are made by hand** after a publish that changed a

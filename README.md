@@ -11,8 +11,8 @@ Unix user of its own, with a short list of what it may do as root.
 It scales from one cloud session with no server to a network of your own
 machines. It was written from the Claude Code setup Bracken Systems runs,
 and every practice here came from running it: the
-[incidents](docs/incidents.md) are twenty-two failures from eight weeks,
-twenty-one of them with the rule they produced.
+[incidents](docs/incidents.md) are twenty-seven failures from nine weeks,
+twenty-five of them with the rule they produced.
 [The reference build](docs/reference-build.md) is the setup they came
 from, in broad strokes, and why it is shaped that way. Codex is covered
 for the cloud path.
@@ -214,6 +214,7 @@ read 2026-10-17.
 | The agent cannot read or write your keys, your shell files or your sudo | a Unix account of its own, homes `0750` | It keeps its own credentials. Reaching its terminals from your account is one sudoers line or an SSH rule, your choice ([the agent as its own user](docs/agent-account.md)) |
 | What the agent may run as root | the sudo allowlist in `/etc/sudoers.d` | For accidents, not a hostile agent: `apt-get install` by package name is one step from root by construction, the deploy targets' allowlists reach it in one step by design, and a regular expression that looks tight can let a verb through (four did here; the probes are in the file's header) |
 | The agent's git token reaches only the repositories it is scoped to | a fine-grained token on selected repositories | When a public repository is off the token, nothing on the server can publish there ([the GitHub side](docs/github-repo.md)) |
+| A push to a public GitHub repository needs the owner's approval on the command | a pre-push hook that runs the visibility check, with `core.hooksPath` set globally | For mistakes, not a wall: `--no-verify`, a repository's own `core.hooksPath` or `git -c` skips it, and a GitHub remote behind an SSH host alias passes. The `Bash` ask rule meant to prompt on the approval did not prompt in auto mode for a compound command ending in a dry-run push (2.1.316, 2026-11-02), unlike the `Edit` rule above, and neither did the publish script's `--push` rule; the `--no-verify` rule is not yet exercised ([the GitHub side](docs/github-repo.md)) |
 | On the public repository, a session cannot create a branch, rewrite `main` or move a tag | rulesets with no bypass actors | read back through the API, not exercised: a test push would be a public act |
 | In the reference build: the agent server cannot reach the TAK server | Tailscale access rules | The web server can, and agents deploy to it; only the instruction to stop before a machine's ways in closes that path |
 | With your own machines: deploy targets hold no key back to the agent server | SSH: no key installed on the targets | |
