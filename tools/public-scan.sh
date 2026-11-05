@@ -36,6 +36,17 @@
 # script runs without one. The terms are never printed except as matched lines.
 # $PUBLIC_SCAN_TERMS adds terms, comma or newline separated, for environments
 # where a deny file cannot be kept (e.g. a cloud environment variable).
+#
+# Allow list: $PUBLIC_SCAN_ALLOW names a file of exact strings a page publishes
+# on purpose, one per line, `#` lines and blank lines skipped (the rest of a
+# line is the string, spaces included, so a trailing space is part of it). When
+# any rule, the deny list included, matches a line, every allow string is
+# removed from that line (literal, case-sensitive, longest first) and the
+# rule is tested against what is left; the hit counts only if the remainder
+# still matches. So an allowed address passes and a second, different address
+# on the same line still fails. Unset, nothing changes; set to a file that
+# cannot be read, exit 2. Needs perl. Hits are printed as they stand in the
+# file, not as the remainder.
 
 set -u
 dir="${1:-}"
@@ -77,12 +88,47 @@ else
   files=$(find "$dir" -path '*/.git' -prune -o -type f -print)
 fi
 
+allow="${PUBLIC_SCAN_ALLOW:-}"
+work=$(mktemp -d) || exit 2
+trap 'rm -rf "$work"' EXIT
+allowstrs="$work/allow"
+if [ -n "$allow" ]; then
+  if [ ! -f "$allow" ] || [ ! -r "$allow" ]; then echo "$0: PUBLIC_SCAN_ALLOW is not a readable file" >&2; exit 2; fi
+  command -v perl >/dev/null 2>&1 || { echo "$0: PUBLIC_SCAN_ALLOW needs perl" >&2; exit 2; }
+  grep -v -e '^#' -e '^[[:space:]]*$' "$allow" > "$allowstrs"
+  [ -s "$allowstrs" ] || allow=""
+fi
+
+# filter_allowed GREP-ARGS...: stdin is grep -HnIZ output (file NUL line:text);
+# removes the allow strings from each text, runs the same grep (with -a, without
+# -H and -I) over the remainders, and prints the original hits whose remainder
+# still matches, in grep's usual file:line:text form.
+filter_allowed() {
+  : > "$work/orig"; : > "$work/rem"
+  perl -e '
+    open(my $a, "<", $ARGV[0]) or exit 2; my @s;
+    while (<$a>) { chomp; s/\r\z//; push @s, $_ if length }
+    @s = sort { length($b) <=> length($a) } @s;
+    open(my $o, ">", $ARGV[1]) or exit 2; open(my $r, ">", $ARGV[2]) or exit 2;
+    while (<STDIN>) {
+      chomp; my ($f, $rest) = split /\0/, $_, 2; next unless defined $rest;
+      my ($n, $t) = split /:/, $rest, 2; next unless defined $t;
+      print $o "$f:$n:$t\n"; for my $x (@s) { $t =~ s/\Q$x\E//g } print $r "$t\n";
+    }' "$allowstrs" "$work/orig" "$work/rem" || return 2
+  grep -a -n "$@" "$work/rem" 2>/dev/null | cut -d: -f1 > "$work/keep"
+  awk 'NR==FNR { k[$1] = 1; next } FNR in k' "$work/keep" "$work/orig"
+}
+
 hits=0
 while IFS='|' read -r label rx rest; do
   [ -z "$label" ] && continue
   mode=-E
   if [ "$rx" = "P" ]; then mode=-P; rx=$rest; elif [ -n "$rest" ]; then rx="$rx|$rest"; fi
-  out=$(printf '%s\n' "$files" | tr '\n' '\0' | xargs -0 grep -HnI "$mode" -- "$rx" 2>/dev/null)
+  if [ -n "$allow" ]; then
+    out=$(printf '%s\n' "$files" | tr '\n' '\0' | xargs -0 grep -HnIZ "$mode" -- "$rx" 2>/dev/null | filter_allowed "$mode" -- "$rx")
+  else
+    out=$(printf '%s\n' "$files" | tr '\n' '\0' | xargs -0 grep -HnI "$mode" -- "$rx" 2>/dev/null)
+  fi
   if [ -n "$out" ]; then
     hits=1
     echo "FAIL  $label"
@@ -91,7 +137,7 @@ while IFS='|' read -r label rx rest; do
 done <<< "$patterns"
 
 deny="${PUBLIC_SCAN_DENY:-$(dirname "$0")/public-scan.deny}"
-terms=$(mktemp) && trap 'rm -f "$terms"' EXIT
+terms="$work/terms"; : > "$terms"
 if [ -f "$deny" ]; then
   grep -v -e '^[[:space:]]*#' -e '^[[:space:]]*$' "$deny" >> "$terms"
 fi
@@ -100,7 +146,11 @@ if [ -n "${PUBLIC_SCAN_TERMS:-}" ]; then
     | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' | grep -v '^$' >> "$terms"
 fi
 if [ -s "$terms" ]; then
-  out=$(printf '%s\n' "$files" | tr '\n' '\0' | xargs -0 grep -HnIiwF -f "$terms" -- 2>/dev/null)
+  if [ -n "$allow" ]; then
+    out=$(printf '%s\n' "$files" | tr '\n' '\0' | xargs -0 grep -HnIiwFZ -f "$terms" -- 2>/dev/null | filter_allowed -iwF -f "$terms" --)
+  else
+    out=$(printf '%s\n' "$files" | tr '\n' '\0' | xargs -0 grep -HnIiwF -f "$terms" -- 2>/dev/null)
+  fi
   if [ -n "$out" ]; then
     hits=1
     echo "FAIL  deny-list term"

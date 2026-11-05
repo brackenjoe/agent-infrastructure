@@ -79,7 +79,7 @@ what.
 
 ## The agents
 
-Fourteen. Three are general, and `starter/` carries trimmed copies of all
+Thirteen. Three are general, and `starter/` carries trimmed copies of all
 three; the rest are this setup's domains, listed so you can see the grain
 at which a domain gets an agent.
 
@@ -87,7 +87,7 @@ at which a domain gets an agent.
 |---|---|---|
 | `manager` | the session's | The front door: reviews each request, routes it to the agent that fits, or does a few minutes' work itself |
 | `builder` | Sonnet, cannot spawn agents | Code to a settled design, one deliverable per brief, inside a fixed list of files |
-| `reviewer` | Opus, cannot edit or spawn | Read-only review by an agent with none of the drafting context: public prose, rule changes, check scripts against their threat model |
+| `reviewer` | Opus, cannot edit or spawn | Read-only review by an agent with none of the drafting context: public prose, rule changes, check scripts against their threat model; and read-only audits of a repo's history, a host's record or a run of session transcripts against a stated rule, with every count coming from a command the report quotes |
 | `box-keeper` | Opus | The Linux machines at the OS level: services, access, updates, backups, config captures; owns the machine record |
 | `web-apps` | Opus | The two web apps and the engines under them, their browser checks, and deploying them |
 | `ardupilot-programmer` | Opus | Anything that runs on or talks to an ArduPilot flight controller: scripts, parameters, SITL, radio firmware |
@@ -95,19 +95,21 @@ at which a domain gets an agent.
 | `airframe` | Opus | Frames, motors, props and packs; weight and thrust budgets; reading a first hover log |
 | `rf-sensing` | Opus | Receive-only RF detection and direction finding on a sensor node, and any claim about what it heard |
 | `tak-sme` | Opus | TAK Server users and certificates, what any feed sends, anything that must show on a device |
-| `remote-usb` | Opus | USB access from the box to a device in the field, the service for it and its public Android fork |
 | `stl-creator` | Opus | Printable parts: a description, photo or measurements in, a parametric model, STL and preview out |
-| `promo` | Opus | Clips, stills and caption cards for the apps and the site; it never posts |
+| `brand` | Opus | The business's public face: the website and its publish path, the design system the apps share, and promo clips and stills; it never posts, and deploys the site only on the owner's word |
 | `client-docs` | Opus | Documents that go to one named reader, built as PDF with previews; it never sends anything |
 
-Two of the fourteen were created after an independent review found their
-areas without an owner. Each domain agent file is short: where it points
+Two were created after an independent review found their areas without
+an owner; one of them, `remote-usb`, was retired on 2026-11-01, when the
+owner judged that its app worked as wanted and the area no longer
+recurred enough to carry a file; its lessons moved into the part's README. An agent goes when
+its area stops recurring, as one does when it starts. Each domain agent file is short: where it points
 at the record for its area, what the builder may not have, and nothing a
 README already says.
 
 ## The tools
 
-About seventy scripts, each with a row in a tool index that says how to
+About eighty scripts, each with a row in a tool index that says how to
 invoke it, and a `docs/` folder for the install notes too long for a row.
 By kind:
 
@@ -164,6 +166,13 @@ By kind:
   unconfirmed. The sandbox went live on 2026-11-02, once the owner
   installed the distribution's AppArmor profile for bwrap; target code
   runs only after its selfcheck proves each of its 20 controls.
+- **It audited its own tooling.** A `quick` run on 2026-11-04 over the
+  sandbox and the run script found the containment boundary sound and
+  four low defects in the steps that set up and land a run: among them,
+  the content check reported ok when its search errored or skipped a
+  symlink or binary file. All four were fixed with an offline test, and
+  landing a run now refuses, copying nothing, if the check has any FAIL
+  (2026-11-05).
 
 ## The full build
 

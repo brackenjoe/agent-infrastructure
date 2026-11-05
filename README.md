@@ -11,8 +11,8 @@ Unix user of its own, with a short list of what it may do as root.
 It scales from one cloud session with no server to a network of your own
 machines. It was written from the Claude Code setup Bracken Systems runs,
 and every practice here came from running it: the
-[incidents](docs/incidents.md) are twenty-seven failures from nine weeks,
-twenty-five of them with the rule they produced.
+[incidents](docs/incidents.md) are thirty-one failures from nine weeks,
+twenty-nine of them with the rule they produced.
 [The reference build](docs/reference-build.md) is the setup they came
 from, in broad strokes, and why it is shaped that way. Codex is covered
 for the cloud path.
@@ -76,7 +76,9 @@ the agents and the reasons for each.
    live edits, and a symlink into a worktree once deleted real flight logs.
 7. **Stop before credentials and public acts.** Anything touching
    credentials or the ways into a machine, and anything that makes
-   something public, waits for you, every time.
+   something public, waits for you, every time. A bug the agent finds in
+   someone else's code or service is reported to you as possibly
+   reportable; you decide what happens next.
 8. **The agent is not you.** On a machine of its own it runs as a locked
    Unix account with its own credentials and a sudo allowlist. Your keys,
    your shell and your sudo are out of its reach by file permissions, and
@@ -166,7 +168,8 @@ The starter is what the cloud walkthrough installs. As it grows:
   anything untracked sits at the repo root. It is tied to our layout and
   not published; the list is the point. Run
   [`tools/check-permissions.sh`](tools/check-permissions.sh) after each
-  Claude Code update. Before any push, run
+  Claude Code update; it reports a Bash write to an agent file as `OPEN`
+  unless a Bash rule or a hook claims it. Before any push, run
   [`tools/check-visibility.sh`](tools/check-visibility.sh) `OWNER REPO`, with
   the names from the remote's URL (a misspelt repo reads `private`): `ask`
   means stop and ask the owner, and `public` needs the owner's approval;
@@ -199,22 +202,22 @@ wrong or missing for it, a correction is welcome
 
 Most rules are instructions the model is trusted to follow. These are
 enforced by something other than the model. The Claude Code rows were
-checked against versions 2.1.289, 2.1.302 and 2.1.310
-(`tools/check-permissions.sh`, last run 2026-10-26) and the
+checked against versions 2.1.289, 2.1.302, 2.1.310 and 2.1.318
+(`tools/check-permissions.sh`, last run 2026-11-05) and the
 [permissions](https://code.claude.com/docs/en/permissions) and
 [permission modes](https://code.claude.com/docs/en/permission-modes) docs,
 read 2026-10-17.
 
 | Rule | Enforced by | Limits |
 |---|---|---|
-| Creating or editing an agent file asks you first | the ask rule `Edit(**/.claude/agents/**)` in `.claude/settings.json` | Holds in every mode; see below the table. Covers Claude Code's file tools, not a script that writes the file itself. Spawning an agent never prompts: `Agent(...)` allow rules do nothing, and auto mode drops them |
+| Creating or editing an agent file asks you first | the ask rule `Edit(**/.claude/agents/**)` in `.claude/settings.json` | Holds in every mode for Claude Code's file tools; see below the table. It does not stop a Bash command that writes the file: on 2.1.318 `sed -i` and a heredoc both did, and only a hook that denies held (below). Spawning an agent never prompts: `Agent(...)` allow rules do nothing, and auto mode drops them |
 | The builder cannot spawn agents; the reviewer cannot edit or spawn | `disallowedTools` in their frontmatter | Bash remains in both, so "never commit" and "nothing you run writes" are rules the files state, not walls |
 | Repo layout, index, links, captures, sudo source, idle worktrees | the repo check script | only when run |
 | No addresses, network names, private terms or credentials in a public push | `tools/public-scan.sh`, then gitleaks | on every pull request here (public patterns only) and when run; does not replace reading the diff |
 | The agent cannot read or write your keys, your shell files or your sudo | a Unix account of its own, homes `0750` | It keeps its own credentials. Reaching its terminals from your account is one sudoers line or an SSH rule, your choice ([the agent as its own user](docs/agent-account.md)) |
 | What the agent may run as root | the sudo allowlist in `/etc/sudoers.d` | For accidents, not a hostile agent: `apt-get install` by package name is one step from root by construction, the deploy targets' allowlists reach it in one step by design, and a regular expression that looks tight can let a verb through (four did here; the probes are in the file's header) |
 | The agent's git token reaches only the repositories it is scoped to | a fine-grained token on selected repositories | When a public repository is off the token, nothing on the server can publish there ([the GitHub side](docs/github-repo.md)) |
-| A push to a public GitHub repository needs the owner's approval on the command | a pre-push hook that runs the visibility check, with `core.hooksPath` set globally | For mistakes, not a wall: `--no-verify`, a repository's own `core.hooksPath` or `git -c` skips it, and a GitHub remote behind an SSH host alias passes. `Bash` ask rules prompt on the approval and on the publish script's `--push`, in auto-mode sessions (2.1.316 and 2.1.317; the owner, 2026-11-03); the `--no-verify` rule is not yet exercised ([the GitHub side](docs/github-repo.md)) |
+| A push to a public GitHub repository needs the owner's approval on the command | a pre-push hook that runs the visibility check, with `core.hooksPath` set globally | For mistakes, not a wall: `--no-verify` (or an abbreviation git accepts, such as `--no-verif`), a repository's own `core.hooksPath` or `git -c` skips it, `gh` writes a repository without a push, and a GitHub remote behind an SSH host alias passes. `Bash` ask rules prompt on the approval and the publish script's `--push` in auto-mode sessions (2.1.316 and 2.1.317; the owner, 2026-11-03), and one command each for `--no-veri`, `hooksPath` and `gh` prompted too (the owner, 2026-11-04); the other `gh` forms and `git commit -n` are not exercised, and `-n` has no rule. They are string matches: a variable or a mixed-case key hides the command, and no script checks them yet ([the GitHub side](docs/github-repo.md)) |
 | On the public repository, a session cannot create a branch, rewrite `main` or move a tag | rulesets with no bypass actors | read back through the API, not exercised: a test push would be a public act |
 | In the reference build: the agent server cannot reach the TAK server | Tailscale access rules | The web server can, and agents deploy to it; only the instruction to stop before a machine's ways in closes that path |
 | With your own machines: deploy targets hold no key back to the agent server | SSH: no key installed on the targets | |
@@ -236,6 +239,22 @@ mode. The docs agree: a one-folder pattern such as `Edit(src/**)` matches
 at any depth as a deny or ask rule, but a two-folder pattern is anchored
 where the session starts (permissions, read 2026-10-17).
 `tools/check-permissions.sh` repeats the bypass case on your version.
+
+**A Bash write is not an Edit.** On 2.1.318 in bypassPermissions, with
+only the ask rule, `sed -i` and `cat > .claude/agents/x.md <<'EOF'` both
+rewrote an agent file. An ask rule on Bash, `Bash(*.claude/agents*)`,
+stopped `sed` but not the heredoc: the docs check a redirect's target
+against `Edit` allow and deny rules, protected paths and the working
+directories, and do not list ask rules
+([permissions](https://code.claude.com/docs/en/permissions), Redirections,
+read 2026-11-05). A PreToolUse hook that returned `ask` ran, and bypass
+mode approved the write anyway; one that returns `deny` held, for both.
+The hook here denies a Bash command only when a write in it targets an
+agent file; it asked on every mention at first, and that stalled
+unattended runs with prompts that were never agent-file edits. It is a
+string heuristic for mistakes, like the rest of this table, and it is not
+in `starter/`, so `tools/check-permissions.sh` reports the starter's Bash
+case as `OPEN`. Edit agent files with the file tools.
 
 Cloud sessions pre-approve file edits in every mode, and the Protected
 paths section names no cloud exception (permission modes, read
@@ -265,7 +284,8 @@ user split moved them onto this table.
   script, shell function and drop-ins
 - `tools/public-scan.sh`: scan a directory before you push it anywhere public
 - `tools/check-permissions.sh`: check the agent-file ask rule still holds,
-  in a throwaway repo
+  in a throwaway repo, and whether anything stops a Bash write to an agent
+  file
 - `tools/check-visibility.sh`: is a GitHub repo `public`, `private`, or
   `ask` the owner; `--selftest` runs offline
 - `.github/workflows/check.yml`: on every pull request, the public scan,

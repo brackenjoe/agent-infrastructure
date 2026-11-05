@@ -20,15 +20,25 @@ the screens have changed.
   the server, so a fresh clone is covered too. A push to a remote that is
   not on GitHub passes.
 - **Its limits.** It catches an agent's mistake; it is not a wall.
-  `--no-verify` skips it. A repository's own `core.hooksPath`, or one
+  `--no-verify` skips it, and so does any abbreviation git accepts:
+  git 2.43.0 takes `--no-verif` and `--no-veri` (`--no-ver` is
+  ambiguous). `gh release create` or a `gh api` write reaches a repository
+  with no push at all. A repository's own `core.hooksPath`, or one
   given with `git -c`, replaces the global one, so check fork checkouts
   and projects whose install sets one. A GitHub remote reached through an
   SSH host alias is not recognised as GitHub and passes. Here `ask` rules
   in the agents' permission settings are meant to prompt on the approval
-  variable and on `--no-verify`. The approval rule and the `--push` rule
-  below prompt the owner in auto-mode sessions (Claude Code 2.1.316 and
-  2.1.317; the owner's word, 2026-11-03); the `--no-verify` rule is not yet
-  exercised. The agent cannot see a prompt the owner answers, only that
+  variable, on `--no-veri` (the shortest form), on `hooksPath` in either
+  case and on `gh` write forms. `git commit -n`, the short form of
+  `--no-verify`, has no rule, and skips the commit-msg hook below. The approval rule
+  and the `--push` rule below prompt the owner in auto-mode sessions
+  (Claude Code 2.1.316 and 2.1.317; the owner's word, 2026-11-03), and so
+  did one command for each of the others (the owner, 2026-11-04): a
+  `--no-veri` dry-run push, a `-c core.hooksPath=/dev/null` command and
+  `gh release list`, which is a read. The rest of the `gh` forms are not
+  exercised. These are string matches:
+  a variable or a mixed-case key hides the command, and no script checks
+  them yet. The agent cannot see a prompt the owner answers, only that
   the command ran: an earlier version of this page said these rules did
   not prompt, from an agent's record that took one for the other. Ask the
   person.
