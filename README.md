@@ -21,7 +21,7 @@ for the cloud path.
 
 | You want | Start with | You need |
 |---|---|---|
-| To try it, with no server | [Set it up in the cloud](https://github.com/brackenjoe/agent-infrastructure/blob/2026.10.26.1/docs/cloud.md): paste its prompt into the AI chat you already use, and it walks you through Claude Code in the cloud, or Codex | a GitHub account, and Claude Pro, Max or Team, or an Enterprise premium or Chat + Claude Code seat ([cloud sessions](https://code.claude.com/docs/en/claude-code-on-the-web), read 2026-10-17); for Codex, a ChatGPT plan that includes it, which [its page](https://github.com/brackenjoe/agent-infrastructure/blob/2026.10.26.1/docs/codex-cloud.md) covers |
+| To try it, with no server | [Set it up in the cloud](https://github.com/brackenjoe/agent-infrastructure/blob/2026.11.07.1/docs/cloud.md): paste its prompt into the AI chat you already use, and it walks you through Claude Code in the cloud, or Codex | a GitHub account, and Claude Pro, Max or Team, or an Enterprise premium or Chat + Claude Code seat ([cloud sessions](https://code.claude.com/docs/en/claude-code-on-the-web), read 2026-10-17); for Codex, a ChatGPT plan that includes it, which [its page](https://github.com/brackenjoe/agent-infrastructure/blob/2026.11.07.1/docs/codex-cloud.md) covers |
 | To run it on your own computer | [On one machine](#on-one-machine), below | Claude Code with a Claude plan or a Console account ([quickstart](https://code.claude.com/docs/en/quickstart), read 2026-10-17), and a git repository |
 | Agents running without you at the keyboard | [The agent server](docs/agent-server.md), then [the agent as its own user](docs/agent-account.md) | a spare Linux machine, and a Pro, Max, Team or Enterprise plan: Remote Control needs a claude.ai login (`/login`), API keys are not supported, and on Team and Enterprise an Owner must turn it on ([Remote Control](https://code.claude.com/docs/en/remote-control), read 2026-10-17) |
 | Agents that deploy to other machines | [Network and access](docs/network.md), [the web server](docs/web-server.md), and [TAK Server integration](docs/tak-integration.md) if you run TAK | a private network such as Tailscale, and the machines |
@@ -105,7 +105,7 @@ Code and a git repository:
    starter somewhere else and merge by hand. From the repository root:
 
    ```
-   git clone --depth 1 --branch 2026.10.26.1 \
+   git clone --depth 1 --branch 2026.11.07.1 \
      https://github.com/brackenjoe/agent-infrastructure /tmp/ai
    cp /tmp/ai/starter/CLAUDE.md .
    cp -R /tmp/ai/starter/.claude .
@@ -170,13 +170,17 @@ The starter is what the cloud walkthrough installs. As it grows:
   [`tools/check-permissions.sh`](tools/check-permissions.sh) after each
   Claude Code update; it reports a Bash write to an agent file as `OPEN`
   unless a Bash rule or a hook claims it. Before any push, run
-  [`tools/check-visibility.sh`](tools/check-visibility.sh) `OWNER REPO`, with
+  `check-visibility.sh OWNER REPO` from [publish-gates](https://github.com/brackenjoe/publish-gates), with
   the names from the remote's URL (a misspelt repo reads `private`): `ask`
   means stop and ask the owner, and `public` needs the owner's approval;
-  before a push to a public remote, run
-  [`tools/public-scan.sh`](tools/public-scan.sh) on the directory you will
-  push (`tools/public-scan.sh .`), have `reviewer` read the new prose, and
-  read the diff anyway.
+  before a push to a public remote, run its `public-scan.sh` on the
+  directory you will push (`public-scan.sh .`), have `reviewer` read the
+  new prose, and read the diff anyway. That repo also holds the git hooks
+  that make the visibility check and the cross-reference rule a mechanism
+  (pre-push refuses a public push without the approval and scans every
+  commit pushed to a repo not known public), and a pre-commit code
+  scanner; `public-scan.sh` itself is run by hand and by this repo's
+  pull-request check, not by a hook.
 - **Give the agent its own machine account** as soon as it runs on a
   machine you also log in to: [the agent as its own user](docs/agent-account.md).
 - **Keep `CLAUDE.md` short.** It loads in every session, so every line
@@ -190,7 +194,7 @@ for.
 ## In Codex
 
 The cloud walkthrough has a Codex path:
-[Codex in the cloud](https://github.com/brackenjoe/agent-infrastructure/blob/2026.10.26.1/docs/codex-cloud.md)
+[Codex in the cloud](https://github.com/brackenjoe/agent-infrastructure/blob/2026.11.07.1/docs/codex-cloud.md)
 writes project instructions in `AGENTS.md`, adapted from the starter's
 rule set. It does not install the manager, builder and reviewer roles:
 those files are Claude Code's and do not configure Codex. The rest of this
@@ -213,11 +217,11 @@ read 2026-10-17.
 | Creating or editing an agent file asks you first | the ask rule `Edit(**/.claude/agents/**)` in `.claude/settings.json` | Holds in every mode for Claude Code's file tools; see below the table. It does not stop a Bash command that writes the file: on 2.1.318 `sed -i` and a heredoc both did, and only a hook that denies held (below). Spawning an agent never prompts: `Agent(...)` allow rules do nothing, and auto mode drops them |
 | The builder cannot spawn agents; the reviewer cannot edit or spawn | `disallowedTools` in their frontmatter | Bash remains in both, so "never commit" and "nothing you run writes" are rules the files state, not walls |
 | Repo layout, index, links, captures, sudo source, idle worktrees | the repo check script | only when run |
-| No addresses, network names, private terms or credentials in a public push | `tools/public-scan.sh`, then gitleaks | on every pull request here (public patterns only) and when run; does not replace reading the diff |
+| No addresses, network names, private terms or credentials in a public push | publish-gates' `public-scan.sh`, then gitleaks | on every pull request here (public patterns only) and when run; does not replace reading the diff |
 | The agent cannot read or write your keys, your shell files or your sudo | a Unix account of its own, homes `0750` | It keeps its own credentials. Reaching its terminals from your account is one sudoers line or an SSH rule, your choice ([the agent as its own user](docs/agent-account.md)) |
 | What the agent may run as root | the sudo allowlist in `/etc/sudoers.d` | For accidents, not a hostile agent: `apt-get install` by package name is one step from root by construction, the deploy targets' allowlists reach it in one step by design, and a regular expression that looks tight can let a verb through (four did here; the probes are in the file's header) |
 | The agent's git token reaches only the repositories it is scoped to | a fine-grained token on selected repositories | When a public repository is off the token, nothing on the server can publish there ([the GitHub side](docs/github-repo.md)) |
-| A push to a public GitHub repository needs the owner's approval on the command | a pre-push hook that runs the visibility check, with `core.hooksPath` set globally | For mistakes, not a wall: `--no-verify` (or an abbreviation git accepts, such as `--no-verif`), a repository's own `core.hooksPath` or `git -c` skips it, `gh` writes a repository without a push, and a GitHub remote behind an SSH host alias passes. `Bash` ask rules prompt on the approval and the publish script's `--push` in auto-mode sessions (2.1.316 and 2.1.317; the owner, 2026-11-03), and one command each for `--no-veri`, `hooksPath` and `gh` prompted too (the owner, 2026-11-04); the other `gh` forms and `git commit -n` are not exercised, and `-n` has no rule. They are string matches: a variable or a mixed-case key hides the command, and no script checks them yet ([the GitHub side](docs/github-repo.md)) |
+| A push to a public GitHub repository needs the owner's approval on the command | publish-gates' pre-push hook, which runs the visibility check and scans the pushed commits for cross-references, with `core.hooksPath` set globally | For mistakes, not a wall: `--no-verify` (or an abbreviation git accepts, such as `--no-verif`), a repository's own `core.hooksPath` or `git -c` skips it, `gh` writes a repository without a push, and a GitHub remote behind an SSH host alias passes. `Bash` ask rules prompt on the approval and the publish script's `--push` in auto-mode sessions (2.1.316 and 2.1.317; the owner, 2026-11-03), and one command each for `--no-veri`, `hooksPath` and `gh` prompted too (the owner, 2026-11-04); the other `gh` forms and `git commit -n` are not exercised, and `-n` has no rule. They are string matches: a variable or a mixed-case key hides the command, and no script checks them yet ([the GitHub side](docs/github-repo.md)) |
 | On the public repository, a session cannot create a branch, rewrite `main` or move a tag | rulesets with no bypass actors | read back through the API, not exercised: a test push would be a public act |
 | In the reference build: the agent server cannot reach the TAK server | Tailscale access rules | The web server can, and agents deploy to it; only the instruction to stop before a machine's ways in closes that path |
 | With your own machines: deploy targets hold no key back to the agent server | SSH: no key installed on the targets | |
@@ -252,9 +256,20 @@ mode approved the write anyway; one that returns `deny` held, for both.
 The hook here denies a Bash command only when a write in it targets an
 agent file; it asked on every mention at first, and that stalled
 unattended runs with prompts that were never agent-file edits. It is a
-string heuristic for mistakes, like the rest of this table, and it is not
-in `starter/`, so `tools/check-permissions.sh` reports the starter's Bash
-case as `OPEN`. Edit agent files with the file tools.
+string heuristic for mistakes, like the rest of this table. It is
+[`tools/claude-hooks/agent-file-guard.py`](tools/claude-hooks/agent-file-guard.py)
+with its test beside it; it needs Claude Code 2.1.295 or later and is wired
+in `.claude/settings.json` as
+
+```json
+"hooks": {"PreToolUse": [{"matcher": "Bash", "hooks": [{"type": "command",
+  "command": "python3 -I \"${CLAUDE_PROJECT_DIR}/tools/claude-hooks/agent-file-guard.py\"",
+  "onFailure": "block"}]}]}
+```
+
+`starter/` ships the ask rule only, not the hook, so
+`tools/check-permissions.sh` reports the starter's Bash case as `OPEN`
+until you add the wiring. Edit agent files with the file tools.
 
 Cloud sessions pre-approve file edits in every mode, and the Protected
 paths section names no cloud exception (permission modes, read
@@ -281,15 +296,20 @@ user split moved them onto this table.
 - `examples/`: a real builder brief and report; skeletons of a part's
   README, a tool index and a machine record
 - `host/`: the agent server's sudo allowlist, Remote Control unit, loop
-  script, shell function and drop-ins
-- `tools/public-scan.sh`: scan a directory before you push it anywhere public
+  script, shell function and drop-ins, and the web host's
+  `install-cloudflared-hardening.sh` with its test ([the web
+  server](docs/web-server.md))
 - `tools/check-permissions.sh`: check the agent-file ask rule still holds,
   in a throwaway repo, and whether anything stops a Bash write to an agent
   file
-- `tools/check-visibility.sh`: is a GitHub repo `public`, `private`, or
-  `ask` the owner; `--selftest` runs offline
-- `.github/workflows/check.yml`: on every pull request, the public scan,
-  gitleaks, relative links, and no edits to `tools/`
+- `tools/claude-hooks/agent-file-guard.py`, `tools/test-agent-file-guard.sh`:
+  the PreToolUse hook that denies a Bash write to an agent file, and its
+  offline test
+- `tools/context_stats.py`: context use per Claude Code transcript,
+  aggregates only, for sizing what each session loads
+- `.github/workflows/check.yml`: on every pull request, the public scan
+  (publish-gates' scanner, pinned), gitleaks, relative links, and no edits
+  to `tools/` or the hardening pair in `host/`
 - `AGENTS.md`, `CLAUDE.md`: the rules any agent follows when editing this
   repo (`CLAUDE.md` imports `AGENTS.md`)
 - `.claude/settings.json`: for sessions on this repo: no session links in
@@ -299,8 +319,12 @@ user split moved them onto this table.
 - `LICENSE`, `LICENSE-CODE`: CC BY 4.0 for text, MIT for code
   (`starter/LICENSE`: MIT-0)
 
-The two scripts in `tools/` are copied unedited from the maintainer's
-live repo at each publish. Nothing else of the live repo is published.
+The scripts in `tools/` and the hardening pair in `host/` are copied
+unedited from the maintainer's live repo at each publish. Nothing else of
+the live repo is published; the tools that stand on their own are their
+own repositories, [publish-gates](https://github.com/brackenjoe/publish-gates),
+[drone-tools](https://github.com/brackenjoe/drone-tools) and
+[print-tools](https://github.com/brackenjoe/print-tools).
 
 ## Contributing and licence
 
@@ -312,4 +336,8 @@ questions go in Discussions, and security problems to
 Code is [MIT](LICENSE-CODE): `tools/` and `host/`. `starter/` is
 [MIT-0](starter/LICENSE): copy it into your own repository with no notice
 owed. Everything else, the prose and the agent and rule files included,
-is [CC BY 4.0](LICENSE). Joe Fernandez, 2026.
+is [CC BY 4.0](LICENSE). Joe Fernandez, 2026. The licence is by repository,
+not by file: this guide's code is small and meant to be copied, so it is
+MIT; a tool that stands on its own is published in its own repository
+under GPL-3.0-or-later, and a file gets the header of the repository it
+is published in.

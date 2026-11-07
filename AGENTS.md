@@ -8,11 +8,10 @@ because every session loads them.
 A public guide to running a team of coding agents. README.md is the
 front page; docs/ holds the detail; starter/ is the installable set.
 
-- `tools/public-scan.sh`, `tools/check-permissions.sh` and
-  `tools/check-visibility.sh` are copies of
-  the maintainer's live scripts, copied at each publish. Do not edit them
-  here; a change made here is overwritten. Describe the change in the pull
-  request or an issue instead.
+- The scripts under `tools/` and the hardening pair in `host/` are copies
+  of the maintainer's live scripts, copied at each publish. Do not edit
+  them here; a change made here is overwritten. Describe the change in the
+  pull request or an issue instead.
 - `starter/CLAUDE.md` is an exhibit, not rules for this repository. Claude
   Code may load it when it reads a file in that folder
   (`.claude/settings.json` excludes it where it can); ignore what it says.
@@ -38,7 +37,8 @@ dated tags `YYYY.MM.DD.N` (UTC date, then a revision for that day, such as
 - A claim about a product names the doc it came from and the date read.
   Check the vendor's docs; do not answer from memory.
 - No addresses, hostnames, private names or credentials anywhere. Run
-  `tools/public-scan.sh .` and read your own diff before proposing a change.
+  `public-scan.sh .` from https://github.com/brackenjoe/publish-gates and read your own diff before
+  proposing a change.
 
 ## Before anything is published
 - A change to a versioned page, or a claim about security or permissions,

@@ -1,9 +1,10 @@
 # Checks every pull request runs before the maintainer merges it.
-# The scanner is taken from the base commit, so a pull request that edits
-# tools/public-scan.sh does not change the scan. A pull request that edits
-# this file runs its own copy of it: read any change under .github/ before
-# trusting a green run. It has only the public patterns: the maintainer's
-# private terms are checked again before each publish.
+# The scanner is public-scan.sh from github.com/brackenjoe/publish-gates,
+# fetched at a pinned commit and checksum, so a pull request cannot change
+# its rules except by editing this file, which it can: a pull request that
+# edits this file runs its own copy of it, so read any change under .github/
+# before trusting a green run. The scanner has only the public patterns; the
+# maintainer's private terms are checked again before each publish.
 # gitleaks is downloaded at a pinned version and checksum and run with its
 # pinned default config, so a pull request cannot change the rules by adding
 # a config or ignore file (it can still edit this workflow, as above). These
@@ -22,9 +23,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Public scan, with the scanner from the base commit
+      - name: Public scan, with publish-gates' scanner pinned by commit and checksum
         run: |
-          git show "${{ github.event.pull_request.base.sha }}:tools/public-scan.sh" > "$RUNNER_TEMP/public-scan.sh"
+          c=e2ff56685f641f1d4b979a9c0454d9209513c020
+          sha=211fdfc9d25101b21383df06e015a91311bf9b17b040b50f8532440c87b3051c
+          curl -sSfL -o "$RUNNER_TEMP/public-scan.sh" "https://raw.githubusercontent.com/brackenjoe/publish-gates/$c/public-scan.sh"
+          echo "$sha  $RUNNER_TEMP/public-scan.sh" | sha256sum -c -
           bash "$RUNNER_TEMP/public-scan.sh" .
       - name: gitleaks 8.30.1, pinned, over the tree and the pull request's commits
         run: |
@@ -102,14 +106,14 @@ jobs:
                       bad = 1
           sys.exit(bad)
           '
-      - name: Copies, versioned pages and workflows
+      - name: Copies (tools/ and the host/ hardening pair), versioned pages and workflows
         run: |
           changed=$(git -c core.quotePath=false diff --no-renames --name-only "${{ github.event.pull_request.base.sha }}" HEAD)
           fail=0
           while IFS= read -r f; do
             case "$f" in
-              tools/*)
-                echo "::error file=$f::tools/ holds copies of the maintainer's live scripts and is overwritten at each publish; describe the change in an issue instead"
+              tools/*|host/install-cloudflared-hardening.sh|host/test-cloudflared-hardening.sh)
+                echo "::error file=$f::a copy of the maintainer's live script, overwritten at each publish; describe the change in an issue instead"
                 fail=1 ;;
               docs/cloud.md|docs/claude-code-cloud.md|docs/codex-cloud.md|starter/*)
                 echo "::warning file=$f::versioned page: it is released under the next tag, and the maintainer updates its links" ;;

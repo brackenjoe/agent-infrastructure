@@ -18,15 +18,17 @@ are the ones that make it more correct or easier to copy.
 
 **Out of scope**
 
-- Edits to `tools/`. Those two scripts are copied from the live repo on
-  each publish, so a change made only here is overwritten. Open an issue
-  and it goes into the live file instead.
+- Edits to `tools/`, and to the hardening pair in `host/`. Those files
+  are copied from the live repo on each publish, so a change made only
+  here is overwritten. Open an issue and it goes into the live file
+  instead.
 - Rewording for style alone.
 
 **Before a pull request**
 
-- Run `tools/public-scan.sh .` and read your own diff: no addresses,
-  hostnames you did not mean to publish, or credentials.
+- Run `public-scan.sh .` from [publish-gates](https://github.com/brackenjoe/publish-gates) and read your own
+  diff: no addresses, hostnames you did not mean to publish, or
+  credentials. The pull request check runs the same scanner.
 - The prose style is short declarative sentences.
 - Contributions are accepted under the licence of the file you change:
   MIT for `tools/` and `host/`, MIT-0 for `starter/`, CC BY 4.0 for

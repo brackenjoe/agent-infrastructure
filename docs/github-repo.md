@@ -10,15 +10,19 @@ the screens have changed.
 
 - **Private.** The agents' repository holds host records, captured config
   and work for named people. Check visibility before every push rather
-  than assuming it; [`tools/check-visibility.sh`](../tools/check-visibility.sh)
-  prints `public`, `private` or `ask`, and `ask` means ask the owner.
-- **A pre-push hook backs that check.** On a push to a github.com remote
-  it runs the visibility script and lets only `private` through. `public`,
-  `ask`, a URL it cannot read, or a failure of the check (no network
-  answers `ask`) is refused with the reason. The owner's approval goes on
-  the command as an environment variable. Set `core.hooksPath` globally on
-  the server, so a fresh clone is covered too. A push to a remote that is
-  not on GitHub passes.
+  than assuming it; `check-visibility.sh` from
+  [publish-gates](https://github.com/brackenjoe/publish-gates) prints `public`, `private` or `ask`, and `ask`
+  means ask the owner.
+- **A pre-push hook backs that check** (publish-gates, `git-hooks/pre-push`).
+  On a push to a github.com remote it runs the visibility script and lets
+  only `private` through. `public`, `ask`, a URL it cannot read, or a
+  failure of the check (no network answers `ask`) is refused with the
+  reason. The owner's approval goes on the command as an environment
+  variable. Set `core.hooksPath` globally on the server, so a fresh clone
+  is covered too. A push to a remote that is not on GitHub passes. The same
+  hook scans every commit being pushed for a GitHub cross-reference (below)
+  unless the target is known public, so the push is the gate for that rule
+  too.
 - **Its limits.** It catches an agent's mistake; it is not a wall.
   `--no-verify` skips it, and so does any abbreviation git accepts:
   git 2.43.0 takes `--no-verif` and `--no-veri` (`--no-ver` is
@@ -30,7 +34,10 @@ the screens have changed.
   in the agents' permission settings are meant to prompt on the approval
   variable, on `--no-veri` (the shortest form), on `hooksPath` in either
   case and on `gh` write forms. `git commit -n`, the short form of
-  `--no-verify`, has no rule, and skips the commit-msg hook below. The approval rule
+  `--no-verify`, has no rule and skips the commit-msg hook below, as do
+  cherry-pick, rebase and `am`; since 2026-11-05 the pre-push scan above
+  catches those at the push, except under `git push --no-verify` or when
+  the target is known public. The approval rule
   and the `--push` rule below prompt the owner in auto-mode sessions
   (Claude Code 2.1.316 and 2.1.317; the owner's word, 2026-11-03), and so
   did one command for each of the others (the owner, 2026-11-04): a
@@ -49,9 +56,10 @@ the screens have changed.
   `owner/repo#N`, `owner/repo@sha` and a GitHub item URL in a private
   commit message are linked by GitHub into the public item's timeline,
   with the private commit's title visible. Write "owner/repo PR N". A
-  `commit-msg` hook refuses the linked forms; a fresh clone enables it with
-  `git config core.hooksPath <dir>`, and the repo check fails when it is
-  not set.
+  `commit-msg` hook (publish-gates) refuses the linked forms in the repos
+  listed in git config `gates.privateRepo`, and pre-push refuses the push;
+  a fresh clone enables the hooks with `git config core.hooksPath <dir>`,
+  and the repo check fails when it is not set.
 - **The noreply address** as the commit email. With email privacy on,
   GitHub refuses a push whose commits carry the private address (GH007).
 - **The Claude GitHub App on selected repositories only.** A cloud session
