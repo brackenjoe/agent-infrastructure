@@ -2,7 +2,7 @@
   "agent": "manager",
   "permissions": {
     "ask": [
-      "Edit(**/.claude/agents/**)"
+      "Edit(//**/.claude/agents/**)"
     ]
   }
 }

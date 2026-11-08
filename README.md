@@ -21,7 +21,7 @@ for the cloud path.
 
 | You want | Start with | You need |
 |---|---|---|
-| To try it, with no server | [Set it up in the cloud](https://github.com/brackenjoe/agent-infrastructure/blob/2026.11.07.1/docs/cloud.md): paste its prompt into the AI chat you already use, and it walks you through Claude Code in the cloud, or Codex | a GitHub account, and Claude Pro, Max or Team, or an Enterprise premium or Chat + Claude Code seat ([cloud sessions](https://code.claude.com/docs/en/claude-code-on-the-web), read 2026-10-17); for Codex, a ChatGPT plan that includes it, which [its page](https://github.com/brackenjoe/agent-infrastructure/blob/2026.11.07.1/docs/codex-cloud.md) covers |
+| To try it, with no server | [Set it up in the cloud](https://github.com/brackenjoe/agent-infrastructure/blob/2026.11.08.1/docs/cloud.md): paste its prompt into the AI chat you already use, and it walks you through Claude Code in the cloud, or Codex | a GitHub account, and Claude Pro, Max or Team, or an Enterprise premium or Chat + Claude Code seat ([cloud sessions](https://code.claude.com/docs/en/claude-code-on-the-web), read 2026-10-17); for Codex, a ChatGPT plan that includes it, which [its page](https://github.com/brackenjoe/agent-infrastructure/blob/2026.11.08.1/docs/codex-cloud.md) covers |
 | To run it on your own computer | [On one machine](#on-one-machine), below | Claude Code with a Claude plan or a Console account ([quickstart](https://code.claude.com/docs/en/quickstart), read 2026-10-17), and a git repository |
 | Agents running without you at the keyboard | [The agent server](docs/agent-server.md), then [the agent as its own user](docs/agent-account.md) | a spare Linux machine, and a Pro, Max, Team or Enterprise plan: Remote Control needs a claude.ai login (`/login`), API keys are not supported, and on Team and Enterprise an Owner must turn it on ([Remote Control](https://code.claude.com/docs/en/remote-control), read 2026-10-17) |
 | Agents that deploy to other machines | [Network and access](docs/network.md), [the web server](docs/web-server.md), and [TAK Server integration](docs/tak-integration.md) if you run TAK | a private network such as Tailscale, and the machines |
@@ -105,7 +105,7 @@ Code and a git repository:
    starter somewhere else and merge by hand. From the repository root:
 
    ```
-   git clone --depth 1 --branch 2026.11.07.1 \
+   git clone --depth 1 --branch 2026.11.08.1 \
      https://github.com/brackenjoe/agent-infrastructure /tmp/ai
    cp /tmp/ai/starter/CLAUDE.md .
    cp -R /tmp/ai/starter/.claude .
@@ -115,7 +115,7 @@ Code and a git repository:
    reviewer, a short rule set with the delegating rule, and the settings
    below. Fill in the rule set's "This project" section.
 2. Its `.claude/settings.json` is `{"agent": "manager", "permissions":
-   {"ask": ["Edit(**/.claude/agents/**)"]}}`. The `agent` setting makes
+   {"ask": ["Edit(//**/.claude/agents/**)"]}}`. The `agent` setting makes
    `manager.md` the main session: its body replaces Claude Code's default
    system prompt, while `CLAUDE.md` still loads (sub-agents, read
    2026-10-17).
@@ -194,7 +194,7 @@ for.
 ## In Codex
 
 The cloud walkthrough has a Codex path:
-[Codex in the cloud](https://github.com/brackenjoe/agent-infrastructure/blob/2026.11.07.1/docs/codex-cloud.md)
+[Codex in the cloud](https://github.com/brackenjoe/agent-infrastructure/blob/2026.11.08.1/docs/codex-cloud.md)
 writes project instructions in `AGENTS.md`, adapted from the starter's
 rule set. It does not install the manager, builder and reviewer roles:
 those files are Claude Code's and do not configure Codex. The rest of this
@@ -207,14 +207,14 @@ wrong or missing for it, a correction is welcome
 Most rules are instructions the model is trusted to follow. These are
 enforced by something other than the model. The Claude Code rows were
 checked against versions 2.1.289, 2.1.302, 2.1.310 and 2.1.318
-(`tools/check-permissions.sh`, last run 2026-11-05) and the
+(`tools/check-permissions.sh`, last run 2026-11-08) and the
 [permissions](https://code.claude.com/docs/en/permissions) and
 [permission modes](https://code.claude.com/docs/en/permission-modes) docs,
 read 2026-10-17.
 
 | Rule | Enforced by | Limits |
 |---|---|---|
-| Creating or editing an agent file asks you first | the ask rule `Edit(**/.claude/agents/**)` in `.claude/settings.json` | Holds in every mode for Claude Code's file tools; see below the table. It does not stop a Bash command that writes the file: on 2.1.318 `sed -i` and a heredoc both did, and only a hook that denies held (below). Spawning an agent never prompts: `Agent(...)` allow rules do nothing, and auto mode drops them |
+| Creating or editing an agent file asks you first | the ask rule `Edit(//**/.claude/agents/**)` in `.claude/settings.json` | Holds in every mode for Claude Code's file tools; after a Bash `cd`, measured in auto and bypassPermissions only (2.1.318); see below the table. It does not stop a Bash command that writes the file: on 2.1.318 `sed -i` and a heredoc both did, and only a hook that denies held (below). Spawning an agent never prompts: `Agent(...)` allow rules do nothing, and auto mode drops them |
 | The builder cannot spawn agents; the reviewer cannot edit or spawn | `disallowedTools` in their frontmatter | Bash remains in both, so "never commit" and "nothing you run writes" are rules the files state, not walls |
 | Repo layout, index, links, captures, sudo source, idle worktrees | the repo check script | only when run |
 | No addresses, network names, private terms or credentials in a public push | publish-gates' `public-scan.sh`, then gitleaks | on every pull request here (public patterns only) and when run; does not replace reading the diff |
@@ -237,12 +237,21 @@ Protected paths, read 2026-10-17). Measured here on 2.1.289, headless with
 no rules, it refused agent files both at the root and inside a git
 worktree under `.claude/worktrees/`. The ask rule prompts in every mode,
 so auto and bypass sessions ask too; in a `-p` run with nobody to answer,
-it is denied. Keep the `**/` prefix: `Edit(.claude/agents/**)` matched
-only where the session started, and let a worktree copy through in bypass
-mode. The docs agree: a one-folder pattern such as `Edit(src/**)` matches
-at any depth as a deny or ask rule, but a two-folder pattern is anchored
-where the session starts (permissions, read 2026-10-17).
-`tools/check-permissions.sh` repeats the bypass case on your version.
+it is denied. Anchor it at the filesystem root with `//`. A pattern
+with no prefix is relative to the current directory
+([permissions](https://code.claude.com/docs/en/permissions), read
+2026-11-08), and the current directory follows the session's Bash `cd`.
+Two looser forms failed here for that reason.
+`Edit(.claude/agents/**)` matched only at that directory, and let a
+worktree copy through in bypass mode (2.1.289). `Edit(**/.claude/agents/**)`
+held until a session's Bash ran `cd .claude/agents`; from there the rule
+no longer matched, and in auto mode the classifier approved an edit of an
+agent file (2.1.318, 2026-11-08). `//**/.claude/agents/**` held after the
+same `cd`. It matches agent files anywhere on the filesystem: in every
+checkout, and by the docs your user-level `~/.claude/agents/` too, so a
+session in this project asks before editing those as well (not measured). A `/` prefix anchors at the project root instead and misses
+agent files outside it. `tools/check-permissions.sh` repeats the bypass
+case, the worktree copy and the edit after a `cd` on your version.
 
 **A Bash write is not an Edit.** On 2.1.318 in bypassPermissions, with
 only the ask rule, `sed -i` and `cat > .claude/agents/x.md <<'EOF'` both
