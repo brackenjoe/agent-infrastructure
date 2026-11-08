@@ -19,7 +19,10 @@ the screens have changed.
   failure of the check (no network answers `ask`) is refused with the
   reason. The owner's approval goes on the command as an environment
   variable. Set `core.hooksPath` globally on the server, so a fresh clone
-  is covered too. A push to a remote that is not on GitHub passes. The same
+  is covered too. A push to a remote that is not on GitHub passes, unless
+  its host name holds a character outside letters, digits, dots and dashes
+  (an underscore, an IPv6 literal, a `%` escape): that host is treated as
+  unknown and refused unless approved. The same
   hook scans every commit being pushed for a GitHub cross-reference (below)
   unless the target is known public, so the push is the gate for that rule
   too.
@@ -30,7 +33,13 @@ the screens have changed.
   with no push at all. A repository's own `core.hooksPath`, or one
   given with `git -c`, replaces the global one, so check fork checkouts
   and projects whose install sets one. A GitHub remote reached through an
-  SSH host alias is not recognised as GitHub and passes. Here `ask` rules
+  SSH host alias is resolved with `ssh -G`, which reads only the default
+  ssh config. An alias defined only in an ssh config that git is told to
+  use (`core.sshCommand`, `GIT_SSH_COMMAND` with `-F`, or a `GIT_SSH`
+  wrapper script) is not resolved, nor is any alias when `ssh -G` fails or
+  times out; such an alias passes as not checked if its name holds only
+  letters, digits, dots and dashes, and is refused as unknown unless
+  approved otherwise. Here `ask` rules
   in the agents' permission settings are meant to prompt on the approval
   variable, on `--no-veri` (the shortest form), on `hooksPath` in either
   case and on `gh` write forms. `git commit -n`, the short form of

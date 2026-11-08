@@ -25,8 +25,8 @@ jobs:
           fetch-depth: 0
       - name: Public scan, with publish-gates' scanner pinned by commit and checksum
         run: |
-          c=e2ff56685f641f1d4b979a9c0454d9209513c020
-          sha=211fdfc9d25101b21383df06e015a91311bf9b17b040b50f8532440c87b3051c
+          c=47e8ab29436e6e5e0508b219cc934c4b39d523cb
+          sha=f936472512ec28b89dd6084d6da4b6d652893c5ef584a17a90000694e3de10cd
           curl -sSfL -o "$RUNNER_TEMP/public-scan.sh" "https://raw.githubusercontent.com/brackenjoe/publish-gates/$c/public-scan.sh"
           echo "$sha  $RUNNER_TEMP/public-scan.sh" | sha256sum -c -
           bash "$RUNNER_TEMP/public-scan.sh" .
