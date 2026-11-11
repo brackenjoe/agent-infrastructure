@@ -24,7 +24,8 @@
 #     flags from a fixed list may surround it.
 #   - `apt-get -y install openssh-server-`: a trailing `-` is apt's remove
 #     syntax, and `-y` also removes a conflicting package. A name now ends
-#     on a letter, digit or `+`, and `--no-remove` is required.
+#     on a letter, digit or `+`, and `--no-remove` is required (which is
+#     what makes `-y` safe to require; see AGENT_APT below).
 #   - `journalctl --vacuum-time=1s`, `dmesg -C`: not reads. Long options are
 #     now a fixed list and dmesg's flags a fixed set.
 #   - `ss -K`: closes sockets, SSH and Tailscale included. `K` is out.
@@ -59,8 +60,10 @@
 #   visudo -c
 # Then, from a second login: `sudo -v` as the operator asks for the password;
 # as the agent, `sudo -n -l` prints these forms, `sudo -n /usr/bin/id` is
-# refused, and so is each form named above. docs/agent-account.md has the
-# steps.
+# refused, and so is each form named above. For the install rule:
+# `sudo -n -l /usr/bin/apt-get --no-remove install shellcheck` is refused
+# (no -y) and `sudo -n -l /usr/bin/apt-get -y --no-remove install
+# shellcheck` is listed. docs/agent-account.md has the steps.
 
 # Reads. systemd 255 runs its pager in secure mode under sudo.
 Cmnd_Alias AGENT_READ = \
@@ -80,10 +83,15 @@ Cmnd_Alias AGENT_READ = \
 # local .deb path, no remove or purge (that could take openssh-server or
 # tailscale), no trailing "-" on a name or a version (apt's remove
 # syntax), and --no-remove so a conflicting package aborts the run instead
-# of being removed.
+# of being removed. "-y" is required and comes first: under it apt refuses
+# a "name=version" below the installed one ("Packages were downgraded and
+# -y was used without --allow-downgrades", apt 2.8.4), and
+# --allow-downgrades cannot pass the name pattern. Without -y the same
+# request stops at apt's prompt, which whoever ran it could answer. It is
+# apt that refuses, not sudo: the rule lists the command.
 Cmnd_Alias AGENT_APT = \
     /usr/bin/apt-get ^(-qq? )?update( -qq?)?$, \
-    /usr/bin/apt-get ^(-y |-qq? |--no-install-recommends )*--no-remove install( [a-z0-9]([a-z0-9.+-]*[a-z0-9+])?(:[a-z0-9]+)?(=[A-Za-z0-9.+:~-]*[A-Za-z0-9.+:~])?)+$
+    /usr/bin/apt-get ^-y (-qq? |--no-install-recommends )*--no-remove install( [a-z0-9]([a-z0-9.+-]*[a-z0-9+])?(:[a-z0-9]+)?(=[A-Za-z0-9.+:~-]*[A-Za-z0-9.+:~])?)+$
 
 # One alias per service the agent operates but does not install: its exact
 # start/stop/restart forms and the reads its checks make. Installing or

@@ -10,7 +10,7 @@ the loop backs off instead. MIT, like the rest of the code here.
 
 | File | Goes to | Does |
 |---|---|---|
-| `90-agent-allowlist` | `/etc/sudoers.d/`, mode 0440, root | everything the agent's account may run as root: reads with fixed flags, and `apt-get --no-remove install` by package name; install beside any existing file, never over it (its header has the steps and the probes) |
+| `90-agent-allowlist` | `/etc/sudoers.d/`, mode 0440, root | everything the agent's account may run as root: reads with fixed flags, and `apt-get -y --no-remove install` by package name; install beside any existing file, never over it (its header has the steps and the probes) |
 | `claude-remote.service` | the agent's `~/.config/systemd/user/` | starts the Remote Control loop in tmux at boot; `KillMode=process` keeps other tmux sessions alive on stop |
 | `claude-remote-loop.sh` | the agent's `~/.local/bin/`, executable | refuses to run in an untrusted directory, then keeps `claude remote-control` running with back-off |
 | `claude-tmux.bash` | append to the agent's `~/.bashrc` | a bare `claude` over SSH attaches to or creates a tmux session |

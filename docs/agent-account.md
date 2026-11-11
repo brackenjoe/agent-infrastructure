@@ -88,8 +88,9 @@ generalised from the live one. Its shape:
   argument-free flags from a fixed list around it, `journalctl` with a
   fixed list of long options, `ss` and `dmesg` with fixed flag sets, LVM
   listings, `ufw status`, `sshd -T`, `apt-get -s ...`. One for
-  `apt-get update` and `apt-get --no-remove install` of packages **by
-  name only**: no `-o` (an apt option can run a command), no local `.deb`
+  `apt-get update` and `apt-get -y --no-remove install` of packages **by
+  name only**: `-y` required and first (under it apt refuses a
+  downgrade), no `-o` (an apt option can run a command), no local `.deb`
   path, no `remove` or `purge`, no trailing `-`. Add an alias per service
   the agent operates, with the exact `systemctl start|stop|restart` forms.
 - Every spec is a POSIX extended regular expression (`^...$`), which needs
