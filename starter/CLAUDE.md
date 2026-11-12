@@ -44,3 +44,6 @@ Verify by exercising the thing, not by seeing that it started.
 Work goes to a branch and a pull request; I merge. Read the diff for
 secrets before it leaves. The report says what changed, each check run
 with its pass and fail counts, and what was not checked and why.
+Re-read the README's not-done list against what the job did: a line the
+work closed leaves the list in the same change, never marked done in
+place, and the report names it, or says "none".

@@ -2,9 +2,9 @@
 
 [Back to the README](../README.md). The setup this guide was written from,
 in broad strokes, for anyone who wants to go past one machine. You do not
-need any of it to use the practices in the README. Apart from the two
-scripts in [`tools/`](../tools/), none of the files described here are
-published: the agent files and the other tools carry host names, project
+need any of it to use the practices in the README. Apart from what is in
+[`tools/`](../tools/) and [`host/`](../host/), none of the files
+described here are published: the agent files and the other tools carry host names, project
 detail and the names of people the work is for. The installable set is
 [`starter/`](../starter/).
 
@@ -107,9 +107,22 @@ its area stops recurring, as one does when it starts. Each domain agent file is 
 at the record for its area, what the builder may not have, and nothing a
 README already says.
 
+The whole setup is to be reviewed every 90 days, or on the owner's word,
+from a written runbook; its first run is due in January 2027, and the
+review of 2026-11-01, done by hand, shaped it. A script gathers the
+facts: spawns by agent, commits per part, which tools were invoked. The
+manager does not judge the rules it works under, so `reviewer` reads the
+rules and the agent set, and reads the session transcripts against the
+delegation and routing rules. Each finding is tagged measured, record or
+owner's word, or as an estimate or hypothesis with what would settle it,
+and is checked against its source. The list of
+things already decided against is read before anything is proposed, and
+nothing changes until the owner answers. Neither the runbook nor the
+script is published.
+
 ## The tools
 
-About eighty scripts, each with a row in a tool index that says how to
+More than a hundred scripts, each with a row in a tool index that says how to
 invoke it, and a `docs/` folder for the install notes too long for a row.
 By kind:
 

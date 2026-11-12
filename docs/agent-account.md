@@ -146,6 +146,12 @@ refuses. So:
    is refused, and so is each probe the file's header names.
 4. Only then remove the old file, and `visudo -c` again.
 
+Know your second way to root before sudo breaks, and test it. Here it is
+recovery mode at the machine's screen, chosen on 2026-11-09 and not yet
+recorded as tested. `pkexec` over Tailscale SSH was tried that day: it
+took the password, then refused with "No session for cookie" (polkit 124
+on Ubuntu 24.04; the cause was not pursued).
+
 Keep the source of the file in the repository and have a check compare
 `sudo -n -l` against it, both ways, so a hand edit of `/etc/sudoers.d`
 cannot leave the source behind.

@@ -35,6 +35,8 @@ Each of these broke a boot here:
 
 **Capture host config into git.** Keep a script that copies a fixed list of hand-made files (sshd drop-ins, units, sysctl files, the ufw rules, the Remote Control unit and loop, `.bashrc`, `~/.claude/settings.json`) into `system/files/` under their absolute paths, with listings of manual packages, enabled units, storage, `sudo -n -l` as the agent and the sshd authentication methods a loopback probe is offered. Run it after touching `/etc`, a unit or a dotfile, and commit; have the repo check fail when a captured file differs from the live one or the sudo listing differs from its source. Never capture the Git token, `~/.claude/.credentials.json`, host keys, `~/.ssh/` or Tailscale state, and keep that list in the capture's own README so the next person does not add one.
 
+**Keep session transcripts for as long as you audit.** Claude Code deletes transcripts older than `cleanupPeriodDays`, 30 by default ([settings reference](https://code.claude.com/docs/en/settings-reference), read 2026-11-12). Set it in the agent account's `~/.claude/settings.json` to at least the interval between your reviews of the setup: here it is 90, for a review every 90 days. Transcripts are plain text and hold whatever a tool read, so a longer window keeps that on disk longer. A cloud session leaves no transcript on the server.
+
 **Imaging.** Take one verified whole-disk image (Clonezilla `savedisk`; the LVM partition alone does not boot). It holds every credential, so store it end-to-end encrypted. It goes stale: the capture plus a push is the live backup. Take an LVM snapshot just before a risky change and drop it after; one left standing here reached 81% of its copy-on-write space.
 
 **Lessons this box paid for:**

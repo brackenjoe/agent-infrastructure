@@ -21,8 +21,9 @@ wall the harness holds.
 
 - **Text that leaves the repository:** nothing identifies a host, a person
   or a client beyond what the brief says is meant to be public; if the
-  repository has a scan for that (the guide this came from ships one,
-  `tools/public-scan.sh`), it runs clean; every claim about security or
+  repository has a scan for that (the guide this came from uses
+  `public-scan.sh` from https://github.com/brackenjoe/publish-gates), it
+  runs clean; every claim about security or
   permissions is true of the code as it is, not as the text says it is.
 - **A pull-request or issue draft to another project:** it says what was
   measured and how, names versions, and makes no claim the diff does not

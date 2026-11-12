@@ -11,8 +11,8 @@ Unix user of its own, with a short list of what it may do as root.
 It scales from one cloud session with no server to a network of your own
 machines. It was written from the Claude Code setup Bracken Systems runs,
 and every practice here came from running it: the
-[incidents](docs/incidents.md) are thirty-one failures from nine weeks,
-twenty-nine of them with the rule they produced.
+[incidents](docs/incidents.md) are thirty-five failures from ten weeks,
+thirty-three of them with the rule they produced.
 [The reference build](docs/reference-build.md) is the setup they came
 from, in broad strokes, and why it is shaped that way. Codex is covered
 for the cloud path.
@@ -21,7 +21,7 @@ for the cloud path.
 
 | You want | Start with | You need |
 |---|---|---|
-| To try it, with no server | [Set it up in the cloud](https://github.com/brackenjoe/agent-infrastructure/blob/2026.11.08.1/docs/cloud.md): paste its prompt into the AI chat you already use, and it walks you through Claude Code in the cloud, or Codex | a GitHub account, and Claude Pro, Max or Team, or an Enterprise premium or Chat + Claude Code seat ([cloud sessions](https://code.claude.com/docs/en/claude-code-on-the-web), read 2026-10-17); for Codex, a ChatGPT plan that includes it, which [its page](https://github.com/brackenjoe/agent-infrastructure/blob/2026.11.08.1/docs/codex-cloud.md) covers |
+| To try it, with no server | [Set it up in the cloud](https://github.com/brackenjoe/agent-infrastructure/blob/2026.11.12.1/docs/cloud.md): paste its prompt into the AI chat you already use, and it walks you through Claude Code in the cloud, or Codex | a GitHub account, and Claude Pro, Max or Team, or an Enterprise premium or Chat + Claude Code seat ([cloud sessions](https://code.claude.com/docs/en/claude-code-on-the-web), read 2026-10-17); for Codex, a ChatGPT plan that includes it, which [its page](https://github.com/brackenjoe/agent-infrastructure/blob/2026.11.12.1/docs/codex-cloud.md) covers |
 | To run it on your own computer | [On one machine](#on-one-machine), below | Claude Code with a Claude plan or a Console account ([quickstart](https://code.claude.com/docs/en/quickstart), read 2026-10-17), and a git repository |
 | Agents running without you at the keyboard | [The agent server](docs/agent-server.md), then [the agent as its own user](docs/agent-account.md) | a spare Linux machine, and a Pro, Max, Team or Enterprise plan: Remote Control needs a claude.ai login (`/login`), API keys are not supported, and on Team and Enterprise an Owner must turn it on ([Remote Control](https://code.claude.com/docs/en/remote-control), read 2026-10-17) |
 | Agents that deploy to other machines | [Network and access](docs/network.md), [the web server](docs/web-server.md), and [TAK Server integration](docs/tak-integration.md) if you run TAK | a private network such as Tailscale, and the machines |
@@ -74,6 +74,8 @@ the agents and the reasons for each.
 6. **One job, one branch.** Where several sessions share a checkout, each
    job gets its own worktree. One session's `git stash` once took another's
    live edits, and a symlink into a worktree once deleted real flight logs.
+   An agent spawned into a worktree of its own resets it to `main` first:
+   two builders here built on a commit older than the manager's.
 7. **Stop before credentials and public acts.** Anything touching
    credentials or the ways into a machine, and anything that makes
    something public, waits for you, every time. A bug the agent finds in
@@ -105,7 +107,7 @@ Code and a git repository:
    starter somewhere else and merge by hand. From the repository root:
 
    ```
-   git clone --depth 1 --branch 2026.11.08.1 \
+   git clone --depth 1 --branch 2026.11.12.1 \
      https://github.com/brackenjoe/agent-infrastructure /tmp/ai
    cp /tmp/ai/starter/CLAUDE.md .
    cp -R /tmp/ai/starter/.claude .
@@ -153,6 +155,24 @@ The starter is what the cloud walkthrough installs. As it grows:
   own VM, which clones the repository
   ([Use Claude Code in the cloud](https://code.claude.com/docs/en/claude-code-on-the-web),
   read 2026-10-17).
+- **Check the base of a subagent's worktree.** A subagent run with
+  `isolation: worktree` branches from the default branch on the remote,
+  not from your session's `HEAD`, unless `worktree.baseRef` is `"head"`
+  ([worktrees](https://code.claude.com/docs/en/worktrees), read
+  2026-11-12). When a remote is set, commits you have not pushed are not
+  in it. Here two of three builders came back on an older commit than the
+  manager's (2026-11-07); the rule since is that the agent runs
+  `git reset --hard main` in its worktree before touching anything.
+  Measured on 2.1.322 (2026-11-12): with local `main` one commit ahead
+  of the remote, a builder's worktree started at the remote's commit.
+  The setting is not tried here.
+- **Keep transcripts as long as your audit interval.** Claude Code
+  deletes session transcripts after `cleanupPeriodDays`, 30 by default
+  ([settings reference](https://code.claude.com/docs/en/settings-reference),
+  read 2026-11-12). A review of the last 90 days needs 90, which is the
+  setting here. Transcripts hold whatever a tool read, so a longer window
+  keeps that on disk longer
+  ([the agent server](docs/agent-server.md)).
 - **Deny destructive connector tools** in `.claude/settings.json`, under
   every name they take: `mcp__claude_ai_<server>__<tool>` where Claude
   Code fetches the connector itself (permissions, MCP, read 2026-10-17),
@@ -194,7 +214,7 @@ for.
 ## In Codex
 
 The cloud walkthrough has a Codex path:
-[Codex in the cloud](https://github.com/brackenjoe/agent-infrastructure/blob/2026.11.08.1/docs/codex-cloud.md)
+[Codex in the cloud](https://github.com/brackenjoe/agent-infrastructure/blob/2026.11.12.1/docs/codex-cloud.md)
 writes project instructions in `AGENTS.md`, adapted from the starter's
 rule set. It does not install the manager, builder and reviewer roles:
 those files are Claude Code's and do not configure Codex. The rest of this
@@ -206,8 +226,10 @@ wrong or missing for it, a correction is welcome
 
 Most rules are instructions the model is trusted to follow. These are
 enforced by something other than the model. The Claude Code rows were
-checked against versions 2.1.289, 2.1.302, 2.1.310 and 2.1.318
-(`tools/check-permissions.sh`, last run 2026-11-08) and the
+checked with `tools/check-permissions.sh` on versions from 2.1.289 to
+2.1.322 (last run 2026-11-11; its probes grew on 2026-11-04 and
+2026-11-08, and the current set has run on 2.1.319, 2.1.321 and 2.1.322)
+and against the
 [permissions](https://code.claude.com/docs/en/permissions) and
 [permission modes](https://code.claude.com/docs/en/permission-modes) docs,
 read 2026-10-17.
@@ -221,7 +243,7 @@ read 2026-10-17.
 | The agent cannot read or write your keys, your shell files or your sudo | a Unix account of its own, homes `0750` | It keeps its own credentials. Reaching its terminals from your account is one sudoers line or an SSH rule, your choice ([the agent as its own user](docs/agent-account.md)) |
 | What the agent may run as root | the sudo allowlist in `/etc/sudoers.d` | For accidents, not a hostile agent: `apt-get install` by package name is one step from root by construction, the deploy targets' allowlists reach it in one step by design, and a regular expression that looks tight can let a verb through (four did here; the probes are in the file's header) |
 | The agent's git token reaches only the repositories it is scoped to | a fine-grained token on selected repositories | When a public repository is off the token, nothing on the server can publish there ([the GitHub side](docs/github-repo.md)) |
-| A push to a public GitHub repository needs the owner's approval on the command | publish-gates' pre-push hook, which runs the visibility check and scans the pushed commits for cross-references, with `core.hooksPath` set globally | For mistakes, not a wall: `--no-verify` (or an abbreviation git accepts, such as `--no-verif`), a repository's own `core.hooksPath` or `git -c` skips it, `gh` writes a repository without a push, and a GitHub remote behind an SSH host alias the hook cannot resolve passes as not checked if the alias name holds only letters, digits, dots and dashes (any other name is refused as unknown unless approved). The hook resolves an alias with `ssh -G`, which reads only the default ssh config, so an alias defined only in an ssh config that git is told to use (`core.sshCommand`, `GIT_SSH_COMMAND` with `-F`, or a `GIT_SSH` wrapper script) is not resolved, nor is any alias when `ssh -G` fails or times out. `Bash` ask rules prompt on the approval and the publish script's `--push` in auto-mode sessions (2.1.316 and 2.1.317; the owner, 2026-11-03), and one command each for `--no-veri`, `hooksPath` and `gh` prompted too (the owner, 2026-11-04); the other `gh` forms and `git commit -n` are not exercised, and `-n` has no rule. They are string matches: a variable or a mixed-case key hides the command, and no script checks them yet ([the GitHub side](docs/github-repo.md)) |
+| A push to a public GitHub repository needs the owner's approval on the command | publish-gates' pre-push hook, which runs the visibility check and scans the pushed commits for cross-references, with `core.hooksPath` set globally | For mistakes, not a wall: `--no-verify` (or an abbreviation git accepts, such as `--no-verif`), a repository's own `core.hooksPath` or `git -c` skips it, `gh` writes a repository without a push, and a GitHub remote behind an SSH host alias defined only in an ssh config that git is told to use (`core.sshCommand`, `GIT_SSH_COMMAND` with `-F`, or a `GIT_SSH` wrapper script) passes as not checked if the alias name holds only letters, digits, dots and dashes (any other name is refused as unknown unless approved). The hook resolves an alias with `ssh -G`, which reads only the default ssh config and answers with the alias's own name for one it does not know. When `ssh -G` itself fails, times out, is not found or prints no hostname, the host is unknown and the push is refused unless approved (since 2026-11-10; before that, an alias with a plain name passed as not checked). `Bash` ask rules prompt on the approval and the publish script's `--push` in auto-mode sessions (2.1.316 and 2.1.317; the owner, 2026-11-03), and one command each for `--no-veri`, `hooksPath` and `gh` prompted too (the owner, 2026-11-04); the other `gh` forms and `git commit -n` are not exercised, and `-n` has no rule. They are string matches: a variable or a mixed-case key hides the command, and no script checks them yet ([the GitHub side](docs/github-repo.md)) |
 | On the public repository, a session cannot create a branch, rewrite `main` or move a tag | rulesets with no bypass actors | read back through the API, not exercised: a test push would be a public act |
 | In the reference build: the agent server cannot reach the TAK server | Tailscale access rules | The web server can, and agents deploy to it; only the instruction to stop before a machine's ways in closes that path |
 | With your own machines: deploy targets hold no key back to the agent server | SSH: no key installed on the targets | |
@@ -252,6 +274,34 @@ checkout, and by the docs your user-level `~/.claude/agents/` too, so a
 session in this project asks before editing those as well (not measured). A `/` prefix anchors at the project root instead and misses
 agent files outside it. `tools/check-permissions.sh` repeats the bypass
 case, the worktree copy and the edit after a `cd` on your version.
+
+**The same is true of every path rule without an anchor, deny rules
+included.** Measured here on 2.1.319 (2026-11-08), in a scratch project
+run headless: after a Bash `cd` into a subdirectory (`src/`), the deny
+rule `Read(**/.env)` no longer applied to the `.env` above it and the file
+was read, in auto mode and in manual mode. In auto mode an edit under a
+deny rule `Edit(**/protected/**)` and one under an ask rule of the same
+shape, both on directories beside `src/`, went through. A deny rule
+anchored with `//` at an absolute path, `Edit(//<project>/abs/**)`, held
+after the same `cd`; no `//` Read rule was run. The unanchored rules
+also held with `CLAUDE_BASH_MAINTAIN_PROJECT_WORKING_DIR=1` set, which
+returns the main session to its original directory after each Bash
+command ([environment variables](https://code.claude.com/docs/en/env-vars),
+read 2026-11-12; the docs say main session, subagents were not measured,
+and the run was in auto mode only). The docs say a pattern with no
+prefix is relative to the current directory
+([permissions](https://code.claude.com/docs/en/permissions), read
+2026-11-12); that a Bash `cd` moves it is measured here, and when it was
+reported the vendor's answer (2026-11-08) was that this is as
+documented: path rules are best-effort governance over what Claude reads
+and edits in a project you trust, and OS-level enforcement is the
+sandbox's job. The sandbox covers shell commands only, not the Read and
+Edit tools ([sandboxing](https://code.claude.com/docs/en/sandboxing),
+read 2026-11-12), so against those tools the anchor is all there is.
+Anchor every rule that guards a path with `//`. A `/` prefix anchors at
+the settings file's own root, which is the project in project settings
+but `~/.claude/` in user settings (permissions, same read; not measured
+after a `cd`). Do not count a path rule as a wall.
 
 **A Bash write is not an Edit.** On 2.1.318 in bypassPermissions, with
 only the ask rule, `sed -i` and `cat > .claude/agents/x.md <<'EOF'` both

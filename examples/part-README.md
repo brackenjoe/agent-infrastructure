@@ -28,7 +28,8 @@ state, not a diary; dated history goes in git or a `CHANGELOG.md` beside it.
 ## Not done
 
 Open items only. A line moves to `CHANGELOG.md` the day it is done, so
-this list never reads as a mix of done and not done.
+this list never reads as a mix of done and not done. Whoever closes it
+moves it, in the same commit; a line is never marked done in place.
 
 - What is known missing, and its trigger or its owner: the event that
   starts it, or the person it waits on.

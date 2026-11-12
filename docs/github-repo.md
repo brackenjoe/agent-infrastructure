@@ -36,10 +36,13 @@ the screens have changed.
   SSH host alias is resolved with `ssh -G`, which reads only the default
   ssh config. An alias defined only in an ssh config that git is told to
   use (`core.sshCommand`, `GIT_SSH_COMMAND` with `-F`, or a `GIT_SSH`
-  wrapper script) is not resolved, nor is any alias when `ssh -G` fails or
-  times out; such an alias passes as not checked if its name holds only
-  letters, digits, dots and dashes, and is refused as unknown unless
-  approved otherwise. Here `ask` rules
+  wrapper script) is not resolved: `ssh -G` answers with the alias's own
+  name, and such an alias passes as not checked if its name holds only
+  letters, digits, dots and dashes; with any other character it is
+  refused as unknown, unless approved. When `ssh -G` itself fails, times out, is not found
+  or prints no hostname, the host is unknown and the push is refused
+  unless approved (since 2026-11-10; before that, an alias with a
+  plain name passed as not checked). Here `ask` rules
   in the agents' permission settings are meant to prompt on the approval
   variable, on `--no-veri` (the shortest form), on `hooksPath` in either
   case and on `gh` write forms. `git commit -n`, the short form of
