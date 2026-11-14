@@ -1,0 +1,44 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 Joe Fernandez
+[Unit]
+Description=Leave a failure marker for %i
+# Started by OnFailure=failed-marker@%n.service in a unit's drop-in
+# (README.md in this directory). It writes the time of the failure into
+# /var/lib/fleet/failed/%i. Nothing here reads it: give the agent a check that
+# lists that directory; it clears a marker with rm after recording it. No notification,
+# no credential.
+
+[Service]
+Type=oneshot
+User=root
+UMask=0022
+# $$1 is a literal $1 for sh: the instance name is passed as an argument, not
+# spliced into the script.
+ExecStart=/bin/sh -c 'date -Is > "/var/lib/fleet/failed/$$1"' failed-marker %i
+TimeoutStartSec=10s
+
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+PrivateNetwork=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+CapabilityBoundingSet=
+
+# The one writable path, created by failed-marker.tmpfiles.conf (0775
+# root:claude). If it is missing the namespace setup fails and this unit
+# fails, which is the right noise.
+ReadWritePaths=/var/lib/fleet/failed

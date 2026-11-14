@@ -355,7 +355,8 @@ user split moved them onto this table.
 - `examples/`: a real builder brief and report; skeletons of a part's
   README, a tool index and a machine record
 - `host/`: the agent server's sudo allowlist, Remote Control unit, loop
-  script, shell function and drop-ins, and the web host's
+  script, shell function and drop-ins, a unit that leaves a dated marker
+  file when a listed unit fails, and the web host's
   `install-cloudflared-hardening.sh` with its test ([the web
   server](docs/web-server.md))
 - `tools/check-permissions.sh`: check the agent-file ask rule still holds,
@@ -366,6 +367,11 @@ user split moved them onto this table.
   offline test
 - `tools/context_stats.py`: context use per Claude Code transcript,
   aggregates only, for sizing what each session loads
+- `tools/not-done.py`: every part README's `## Not done` section printed
+  in one place; `--untagged` lists items that name no trigger or owner
+  (pass `--owner NAME` for a person who owns items), and `--stale` items
+  that read as already done. Word checks: it finds candidates, a person
+  decides
 - `.github/workflows/check.yml`: on every pull request, the public scan
   (publish-gates' scanner, pinned), gitleaks, relative links, and no edits
   to `tools/` or the hardening pair in `host/`

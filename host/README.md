@@ -17,6 +17,8 @@ the loop backs off instead. MIT, like the rest of the code here.
 | `99-lid.conf` | `/etc/systemd/logind.conf.d/` | a laptop keeps running with the lid shut |
 | `60-panic-reboot.conf`, `61-lockup-panic.conf` | `/etc/sysctl.d/` | a panic or detected lockup reboots the box |
 | `10-hardening.conf` | `/etc/ssh/sshd_config.d/` | no password or root logins, no agent or TCP forwarding; sorts before `50-cloud-init.conf`, whose `yes` would otherwise win |
+| `failed-marker@.service` | `/etc/systemd/system/` | a hardened oneshot: when a unit that names it in `OnFailure=` fails, it writes the time into `/var/lib/fleet/failed/<unit>`; it sends no notification and holds no credential, so give the agent a check that lists that directory (in its status script, or a rule in `CLAUDE.md`), and it removes a marker once it has recorded the failure |
+| `failed-marker.tmpfiles.conf` | `/etc/tmpfiles.d/failed-marker.conf` | creates that directory, 0775 root:claude, so the agent's account can delete a marker without sudo |
 
 **As the operator, root** (`sudo -s`; the agent's account has no password
 and none of this is on its allowlist):
@@ -30,6 +32,16 @@ and none of this is on its allowlist):
     systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target
 
 Test `sshd -t` and a second SSH login before closing the one you are in.
+
+For each unit whose failure should leave a marker (a backup, a tunnel, the
+unattended upgrade), a drop-in named after the full unit, suffix included, for example
+`/etc/systemd/system/apt-daily-upgrade.service.d/failed-marker.conf`:
+
+    [Unit]
+    OnFailure=failed-marker@%n.service
+
+then `systemd-tmpfiles --create /etc/tmpfiles.d/failed-marker.conf` and
+`systemctl daemon-reload`. `systemctl show -p OnFailure <unit>` proves it took.
 
 **As the agent** (`sudo -iu claude`, then
 `export XDG_RUNTIME_DIR=/run/user/$(id -u)` so `systemctl --user` has a
