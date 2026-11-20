@@ -54,10 +54,14 @@ the screens have changed.
   (Claude Code 2.1.316 and 2.1.317; the owner's word, 2026-11-03), and so
   did one command for each of the others (the owner, 2026-11-04): a
   `--no-veri` dry-run push, a `-c core.hooksPath=/dev/null` command and
-  `gh release list`, which is a read. The rest of the `gh` forms are not
-  exercised. These are string matches:
-  a variable or a mixed-case key hides the command, and no script checks
-  them yet. The agent cannot see a prompt the owner answers, only that
+  `gh release list`, which is a read; the lowercase `hookspath` and every
+  other `gh` form prompted too, one command each (Claude Code 2.1.329, the
+  owner, 2026-11-20). These are string matches: a variable or a
+  mixed-case key hides the command. `tools/check-permissions.sh` checks
+  that each `--no-veri`, `hooksPath` and `gh` rule spelled as in its table
+  (`pg_rule`) still refuses a harmless probe in a headless run, after
+  every update; a rule spelled another way gets an `info` line and no
+  probe. A headless refusal is not proof that a prompt reaches you. The agent cannot see a prompt the owner answers, only that
   the command ran: an earlier version of this page said these rules did
   not prompt, from an agent's record that took one for the other. Ask the
   person.

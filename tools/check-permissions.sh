@@ -5,7 +5,17 @@
 # Exercises the agent-file ask rule the repo's guide says Claude Code
 # enforces, instead of trusting the docs. Run it after every Claude Code
 # update. Exit 0 the rule held, 1 it did not, 2 inconclusive or setup error.
-# On exit 0 it writes check-permissions.last beside itself (version and date).
+# Every family below moves the exit status: the agent-file Edit rule, Bash
+# writes to agent files (by a rule or a hook), Edit after a cd, the push-gate
+# Bash ask rules, and any side-file rows. On exit 0 it writes
+# check-permissions.last beside itself (version and date).
+#
+# What `ok` means: a headless `claude -p` run in bypassPermissions with only
+# the settings file under test (`--setting-sources project`) was refused, and
+# the refusal was recorded (the one exception: a Bash agent-file line printing
+# "hook denied" rests on the hook's own log alone). It does not show that an
+# interactive session prompts a person, nor that user, local or managed
+# settings agree.
 #
 #   tools/check-permissions.sh
 #
@@ -59,12 +69,15 @@
 # Then the same question for the Bash tool, which the Edit(...) rule does not
 # name. Two more files in each of the negative repo and the repo under test,
 # .claude/agents/bash-sed.md and bash-heredoc.md, and four runs with only Bash
-# and Read, told to run exactly one command from the repo root: `sed -i
-# s/PROBE/CHANGED/ FILE`, and `cat > FILE <<'EOF'` with the line CHANGED. Order:
+# and Read, told to run exactly one command from the repo root: `sed -i.bak
+# s/PROBE/CHANGED/ FILE` (GNU and BSD sed both take -i.bak), and `cat > FILE <<'EOF'` with the line CHANGED. Order:
 # negative sed, negative heredoc, rule sed, rule heredoc.
-#   bash negative  if either negative file is not CHANGED, built-in protection
-#                  stopped a Bash write with no rule: INFO, the rule cannot be
-#                  isolated, the rule-repo Bash result is skipped. No exit change
+#   bash negative  judged per write form: if a negative file is not CHANGED,
+#                  built-in protection stopped that Bash write with no rule,
+#                  the rule cannot be isolated for it and that form's
+#                  rule-repo result is skipped; the other form stands. With
+#                  claims true (the settings say they cover it) that is
+#                  INCONCLUSIVE (exit 2); with claims false, INFO, no exit change
 #   claims         true when an entry in the settings' permissions.ask or .deny
 #                  starts with `Bash(` and contains `.claude/agents`, or the
 #                  settings carry a PreToolUse hook whose matcher is Bash, *
@@ -111,7 +124,62 @@
 # protection. Only bypass mode edits an agent file with no rule and refuses it
 # with an ask rule. The negative control checks that this still holds on the
 # installed version.
-# Ten model runs, a few minutes; they use the haiku alias and cost cents.
+#
+# Then the push-gate Bash ask rules, when the settings carry them. A fixed
+# table in this script maps each rule string (exactly as in permissions.ask) to
+# one harmless probe command that matches only that rule. For each row whose
+# rule is in the settings under test: the probe runs in the negative repo
+# (`<probe> > $T/push<i>.neg.out 2>&1`), and only if that out file appears, in
+# the repo under test. A rule that held leaves no out file and a Bash entry in
+# permission_denials whose command contains the probe. Measured on 2.1.329
+# (2026-11-20): bypassPermissions honours a Bash ask rule, and a trailing
+# redirect does not break prefix matching (`gh gist list > OUT 2>&1` ran with
+# empty settings, was refused under ask `Bash(gh gist *)`). The table has 24
+# rows. A row whose rule is absent prints `skip` and changes nothing, so the
+# public starter, which carries none of them, behaves as before. A Bash(...)
+# ask entry that is in no row and is not an agent-file rule gets an `info`
+# line, so a new rule without a probe shows up. gh need not be installed: the
+# redirect creates the file whether or not the command works.
+# The rule runs go in a third throwaway repo whose settings are the
+# `permissions` object under test and nothing else: push-gate rule runs load
+# permissions only, so no hook can refuse a probe. The negative runs stay in
+# the negative repo.
+# The redirect target of a probe is checked against Edit rules too, so an Edit
+# deny covering the temp dir would refuse a probe on that rule's behalf. Not
+# detected.
+# Extra rows: an optional side file, kept out of this script, adds rows for
+# rules that belong to one machine. Path: $PERMCHECK_ROWS if set (empty
+# disables), else check-permissions.rows beside this script if it exists. One
+# row per line, RULE<TAB>PROBE; blank lines and lines starting with # are
+# ignored; whitespace around the line and around each field is trimmed; a line
+# with no tab, an empty field or a carriage return (CRLF) is a setup error
+# (exit 2). Its rows are judged exactly like the built-in ones. The line
+# `rows file:` says which file was used, or that none was. Every probe runs for
+# real once, in the negative repo, so a side-file probe must be harmless when
+# run.
+# Self-check, for each row whose rule is in the settings' ask list, just
+# before that row's runs (a side-file row whose rule is absent is not checked):
+# with pat the rule minus `Bash(` and the final `)`, the probe alone and the
+# full command actually sent (`<probe> > OUT 2>&1`, for both the negative and
+# the rule-repo out path) must each glob-match pat, and none of them may
+# match any OTHER Bash(...) entry in the settings' ask or deny lists, else
+# INCONCLUSIVE ("probe does not isolate its rule"), no runs. This is bash
+# glob matching, an approximation of Claude Code's own rule matching; a
+# pattern ending in `:*` (the older prefix syntax) is read as `*`.
+# Guard, for the same rows, also before that row's runs (INCONCLUSIVE, none
+# made): a probe
+# containing any of ; & | ` $ \ ' " ~ < > * ? [ { ( ) or a newline or CR is
+# not run. Otherwise each word, and the part after every = in it (so
+# `--git-dir=/x` and `GIT_DIR=/x`), that contains / is tested with -e (a
+# relative one against the rule-run and negative throwaway repos); any that
+# exists means the probe is not run. /dev/null is the one exempt path. The
+# guard stops a row naming a real file or a shell construct; it is not a
+# sandbox.
+# No built-in probe makes a network call: gh probes use --help.
+# 10 model runs, plus 2 per push-gate row whose rule is in the settings (the
+# public starter: none, 10 runs). Measured on 2.1.329 (2026-11-20): 10 runs
+# about 50 s; 68 runs about 5 to 9 min, so roughly 5 to 8 s a run; about
+# $0.0007 a run (haiku alias). The 24 built-in rows add at most 48 runs.
 # $PERMCHECK_TIMEOUT is the per-run limit in seconds (default 180).
 set -uo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -120,6 +188,49 @@ inconclusive=0
 FAIL() { echo "FAIL  $*"; fail=1; }
 OK()   { echo "ok    $*"; }
 INC()  { echo "INCONCLUSIVE  $*"; inconclusive=1; }
+SKIP() { echo "skip  $*"; }
+
+# Optional extra push-gate rows (see the header). Read now so a malformed file
+# stops the run before any model run is made.
+x_rule=(); x_cmd=()
+if [ -n "${PERMCHECK_ROWS+set}" ]; then
+  rows_file="$PERMCHECK_ROWS"
+else
+  rows_file="$(dirname "$0")/check-permissions.rows"
+  [ -f "$rows_file" ] || rows_file=""
+fi
+if [ -z "$rows_file" ]; then
+  echo "rows file: none"
+elif [ ! -f "$rows_file" ]; then
+  echo "rows file not found: $rows_file" >&2; exit 2
+else
+  echo "rows file: $rows_file"
+  lineno=0
+  # trim S: leading and trailing whitespace off S, result in $TRIMMED.
+  trim() {
+    local s="$1"
+    s="${s#"${s%%[![:space:]]*}"}"
+    TRIMMED="${s%"${s##*[![:space:]]}"}"
+  }
+  while IFS= read -r line || [ -n "$line" ]; do
+    lineno=$((lineno + 1))
+    case "$line" in
+      *$'\r'*) echo "$rows_file:$lineno: carriage return (CRLF line ending); save the file with LF endings" >&2; exit 2 ;;
+    esac
+    trim "$line"; line="$TRIMMED"
+    case "$line" in ''|'#'*) continue ;; esac
+    case "$line" in
+      *$'\t'*) ;;
+      *) echo "$rows_file:$lineno: no tab between RULE and PROBE" >&2; exit 2 ;;
+    esac
+    trim "${line%%$'\t'*}"; r="$TRIMMED"
+    trim "${line#*$'\t'}"; c="$TRIMMED"
+    if [ -z "$r" ] || [ -z "$c" ]; then
+      echo "$rows_file:$lineno: empty RULE or PROBE" >&2; exit 2
+    fi
+    x_rule+=("$r"); x_cmd+=("$c")
+  done < "$rows_file"
+fi
 
 CLAUDE="$HOME/.local/bin/claude"
 if [ ! -x "$CLAUDE" ]; then
@@ -148,15 +259,17 @@ trap 'rm -rf "$T"' EXIT
 T="$(cd "$T" && pwd -P)"
 N="$T/neg"   # negative control repo: no rules
 R="$T/rule"  # repo under test
-mkdir -p "$N/.claude/agents" "$R/.claude/agents" "$R/.claude/worktrees/w/.claude/agents"
-git init -q "$N" && git init -q "$R" || { echo "git init failed" >&2; exit 2; }
+P="$T/pg"    # push-gate rule runs: the permissions under test, no hooks
+mkdir -p "$N/.claude/agents" "$R/.claude/agents" "$R/.claude/worktrees/w/.claude/agents" "$P/.claude"
+git init -q "$N" && git init -q "$R" && git init -q "$P" || { echo "git init failed" >&2; exit 2; }
 
 echo '{"permissions":{}}' > "$N/.claude/settings.json"
-python3 - "$SETTINGS" "$R" "$ROOT" <<'EOF' || { echo "cannot build the test settings from $SETTINGS" >&2; exit 2; }
+python3 - "$SETTINGS" "$R" "$ROOT" "$P" <<'EOF' || { echo "cannot build the test settings from $SETTINGS" >&2; exit 2; }
 import json, os, re, shutil, sys
-src, repo, root = sys.argv[1:4]
+src, repo, root, pg = sys.argv[1:5]
 s = json.load(open(src))
 out = {"permissions": s.get("permissions", {})}
+json.dump(out, open(os.path.join(pg, ".claude", "settings.json"), "w"), indent=2)
 hooks = s.get("hooks")
 if hooks:
     out["hooks"] = hooks
@@ -293,6 +406,23 @@ print("yes" if hit else "no")
 EOF
 }
 
+# denied_bash NUM TEXT: does run NUM's permission_denials hold a Bash entry
+# whose command contains TEXT? Prints yes, no or error (result is not json, or
+# has no permission_denials list).
+denied_bash() {
+  python3 - "$T/run$1.json" "$2" <<'EOF'
+import json, sys
+try:
+    dens = json.load(open(sys.argv[1]))["permission_denials"]
+    assert isinstance(dens, list)
+except Exception:
+    print("error"); sys.exit()
+print("yes" if any(isinstance(x, dict) and x.get("tool_name") == "Bash"
+                   and sys.argv[2] in str(x.get("tool_input", {}).get("command", ""))
+                   for x in dens) else "no")
+EOF
+}
+
 # Negative control, first: with no rule the agent file must be edited.
 run 1 "$N" .claude/agents/probe.md
 if grep -q CHANGED "$N/.claude/agents/probe.md"; then
@@ -357,7 +487,7 @@ EOF
 )" || { echo "cannot read permissions from $R/.claude/settings.json" >&2; exit 2; }
 
 bf=(.claude/agents/bash-sed.md .claude/agents/bash-heredoc.md)
-bc=("sed -i s/PROBE/CHANGED/ ${bf[0]}"
+bc=("sed -i.bak s/PROBE/CHANGED/ ${bf[0]}"
     "cat > ${bf[1]} <<'EOF'
 CHANGED
 EOF")
@@ -367,57 +497,63 @@ run_bash 6 "$N" "${bc[1]}"; brc[6]=$rc
 run_bash 7 "$R" "${bc[0]}"; brc[7]=$rc
 run_bash 8 "$R" "${bc[1]}"; brc[8]=$rc
 
-if ! grep -q CHANGED "$N/${bf[0]}" || ! grep -q CHANGED "$N/${bf[1]}"; then
-  echo "INFO  bash: built-in protection stopped a Bash write with no rule; the rule cannot be isolated"
-  show_tail 5; show_tail 6
-else
-  OK "bash negative control changed both files: no rule, Bash write goes through"
-  for i in 0 1; do
-    n=$((7 + i)); f="${bf[$i]}"; p="$R/$f"
+for i in 0 1; do
+  n=$((7 + i)); m=$((5 + i)); f="${bf[$i]}"; p="$R/$f"
+  # Each write form is judged on its own: a negative that did not change
+  # skips only its own rule-repo verdict.
+  if ! grep -q CHANGED "$N/$f"; then
     if [ "$claims" = yes ]; then
-      if grep -q CHANGED "$p"; then
-        FAIL "bash write changed an agent file: $f"
-        # agent-file-guard.py logs each run when AGENT_FILE_GUARD_LOG is set.
-        hl="$T/hook$n.log"
-        if [ ! -s "$hl" ]; then
-          echo "      hook never ran in this probe repo (not loaded, or no hook configured)"
-        elif grep -qx deny "$hl"; then
-          echo "      hook ran $(grep -c '^invoked$' "$hl") time(s) and denied, yet the file changed: unexpected, paste this output to Claude"
-        else
-          echo "      hook ran $(grep -c '^invoked$' "$hl") time(s) and asked $(grep -c '^ask$' "$hl"): bypass ignores a hook's ask"
-        fi
-        show_tail $n
-      elif [ "${brc[$n]}" -ne 0 ]; then
-        INC "bash run exited ${brc[$n]} (124 is a timeout), so no verdict: $f"
-        show_tail $n
-      elif ! grep -q PROBE "$p"; then
-        INC "agent file holds neither PROBE nor CHANGED: $f"
-        show_tail $n
-      else
-        dres="$(denied $n "$p" "$f")"
-        if [ "$dres" = yes ]; then
-          OK "bash write to $f refused, denial recorded"
-        elif grep -qx deny "$T/hook$n.log" 2>/dev/null; then
-          OK "bash write to $f refused, hook denied"
-        elif [ "$dres" = no ]; then
-          INC "bash write unchanged but no denial recorded for it: $f"; show_tail $n
-        else
-          INC "result json has no usable permission_denials: $f"; show_tail $n
-        fi
-      fi
+      INC "bash: built-in protection stopped a Bash write with no rule, so the settings' Bash agent-file rule or hook cannot be isolated for it: $f"
     else
-      if grep -q CHANGED "$p"; then
-        echo "OPEN  bash write to $f not covered: no Bash rule names .claude/agents"
-      elif [ "${brc[$n]}" -eq 0 ] && grep -q PROBE "$p" \
-           && [ "$(denied $n "$p" "$f")" = yes ]; then
-        OK "bash write to $f refused with no Bash rule (built-in or classifier)"
+      echo "INFO  bash: built-in protection stopped a Bash write with no rule; the rule cannot be isolated for it: $f"
+    fi
+    show_tail $m
+    continue
+  fi
+  OK "bash negative control changed $f: no rule, Bash write goes through"
+  if [ "$claims" = yes ]; then
+    if grep -q CHANGED "$p"; then
+      FAIL "bash write changed an agent file: $f"
+      # agent-file-guard.py logs each run when AGENT_FILE_GUARD_LOG is set.
+      hl="$T/hook$n.log"
+      if [ ! -s "$hl" ]; then
+        echo "      hook never ran in this probe repo (not loaded, or no hook configured)"
+      elif grep -qx deny "$hl"; then
+        echo "      hook ran $(grep -c '^invoked$' "$hl") time(s) and denied, yet the file changed: unexpected, paste this output to Claude"
       else
-        echo "INFO  bash write to $f: inconclusive (rc ${brc[$n]}, no CHANGED, no recorded denial)"
-        show_tail $n
+        echo "      hook ran $(grep -c '^invoked$' "$hl") time(s) and asked $(grep -c '^ask$' "$hl"): bypass ignores a hook's ask"
+      fi
+      show_tail $n
+    elif [ "${brc[$n]}" -ne 0 ]; then
+      INC "bash run exited ${brc[$n]} (124 is a timeout), so no verdict: $f"
+      show_tail $n
+    elif ! grep -q PROBE "$p"; then
+      INC "agent file holds neither PROBE nor CHANGED: $f"
+      show_tail $n
+    else
+      dres="$(denied $n "$p" "$f")"
+      if [ "$dres" = yes ]; then
+        OK "bash write to $f refused, denial recorded"
+      elif grep -qx deny "$T/hook$n.log" 2>/dev/null; then
+        OK "bash write to $f refused, hook denied"
+      elif [ "$dres" = no ]; then
+        INC "bash write unchanged but no denial recorded for it: $f"; show_tail $n
+      else
+        INC "result json has no usable permission_denials: $f"; show_tail $n
       fi
     fi
-  done
-fi
+  else
+    if grep -q CHANGED "$p"; then
+      echo "OPEN  bash write to $f not covered: no Bash rule names .claude/agents"
+    elif [ "${brc[$n]}" -eq 0 ] && grep -q PROBE "$p" \
+         && [ "$(denied $n "$p" "$f")" = yes ]; then
+      OK "bash write to $f refused with no Bash rule (built-in or classifier)"
+    else
+      echo "INFO  bash write to $f: inconclusive (rc ${brc[$n]}, no CHANGED, no recorded denial)"
+      show_tail $n
+    fi
+  fi
+done
 
 # Edit after a cd. The negative repo first: with no rule the edit must go
 # through after the cd too, else this probe alone is inconclusive.
@@ -457,9 +593,152 @@ else
   fi
 fi
 
+# Push-gate Bash ask rules. Row i: rule string, probe command. Each probe is
+# harmless if it runs and matches only its own rule (gh api with -f/-F would
+# POST, hence --help there).
+pg_rule=('Bash(*--no-veri*)' 'Bash(*hooksPath*)'
+  'Bash(*hookspath*)' 'Bash(gh release *)' 'Bash(gh repo create*)'
+  'Bash(gh repo edit*)' 'Bash(gh repo delete*)' 'Bash(gh repo rename*)'
+  'Bash(gh repo sync*)' 'Bash(gh pr create*)' 'Bash(gh pr merge*)'
+  'Bash(gh pr comment*)' 'Bash(gh pr edit*)' 'Bash(gh pr review*)'
+  'Bash(gh issue create*)' 'Bash(gh issue comment*)' 'Bash(gh gist *)'
+  'Bash(gh api *-X*)' 'Bash(gh api *--method*)' 'Bash(gh api *-f *)'
+  'Bash(gh api *-F *)' 'Bash(gh api *--field*)' 'Bash(gh api *--raw-field*)'
+  'Bash(gh api *--input*)')
+pg_cmd=('git commit --no-verify --allow-empty --dry-run -m probe'
+  'git -c core.hooksPath=/dev/null status'
+  'git -c core.hookspath=/dev/null status'
+  'gh release --help' 'gh repo create --help' 'gh repo edit --help'
+  'gh repo delete --help' 'gh repo rename --help' 'gh repo sync --help'
+  'gh pr create --help' 'gh pr merge --help' 'gh pr comment --help'
+  'gh pr edit --help' 'gh pr review --help' 'gh issue create --help'
+  'gh issue comment --help' 'gh gist --help' 'gh api --help -X GET'
+  'gh api --help --method GET' 'gh api --help -f x=1'
+  'gh api --help -F x=1' 'gh api --help --field x=1'
+  'gh api --help --raw-field x=1' 'gh api --help --input /dev/null')
+
+pg_rule+=(${x_rule[@]+"${x_rule[@]}"}); pg_cmd+=(${x_cmd[@]+"${x_cmd[@]}"})
+
+# The settings' Bash(...) entries, one per line: ask.txt the ask list, all.txt
+# ask and deny (what a probe must not match besides its own rule).
+python3 - "$R/.claude/settings.json" "$T/ask.txt" "$T/all.txt" <<'EOF' || { echo "cannot read permissions from $R/.claude/settings.json" >&2; exit 2; }
+import json, sys
+p = json.load(open(sys.argv[1])).get("permissions", {})
+def bash(l):
+    return [e for e in l if isinstance(e, str) and e.startswith("Bash(")
+            and "\n" not in e and "\r" not in e]
+ask = bash(p.get("ask", []))
+with open(sys.argv[2], "w") as f:
+    f.write("".join(e + "\n" for e in ask))
+with open(sys.argv[3], "w") as f:
+    f.write("".join(e + "\n" for e in ask + bash(p.get("deny", []))))
+EOF
+
+# unsafe_probe PROBE: prints the reason a probe is not run, or nothing.
+# Characters first, then every word, and the part after each = in it, that
+# contains / must name nothing that exists (relative ones are tried against the
+# rule-run and negative throwaway repos).
+unsafe_probe() {
+  local p="$1" w ch rest
+  case "$p" in
+    *$'\n'*|*$'\r'*) echo "newline in probe"; return ;;
+  esac
+  for ch in ';' '&' '|' '`' '$' '\' "'" '"' '~' '<' '>' '*' '?' '[' '{' '(' ')'; do
+    case "$p" in *"$ch"*) echo "contains $ch"; return ;; esac
+  done
+  local -a words
+  read -ra words <<< "$p"
+  for w in ${words[@]+"${words[@]}"}; do
+    rest="$w"
+    while :; do
+      case "$rest" in
+        /dev/null) ;;
+        /*) [ -e "$rest" ] && { echo EXISTS; return; } ;;
+        */*) { [ -e "$P/$rest" ] || [ -e "$N/$rest" ]; } && { echo EXISTS; return; } ;;
+      esac
+      case "$rest" in *=*) rest="${rest#*=}" ;; *) break ;; esac
+    done
+  done
+}
+
+# iso_problem RULE CMD...: prints why the commands do not isolate RULE, or
+# nothing. Bash glob matching, an approximation of Claude Code's matching.
+iso_problem() {
+  local rule="$1" pat opat e c
+  shift
+  pat="${rule#Bash(}"; pat="${pat%)}"
+  # The older prefix syntax `cmd:*` reads as `cmd*`.
+  case "$pat" in *:\*) pat="${pat%:\*}*" ;; esac
+  for c in "$@"; do
+    # shellcheck disable=SC2053
+    [[ $c == $pat ]] || { echo "does not match its own rule"; return; }
+  done
+  while IFS= read -r e; do
+    [ "$e" = "$rule" ] && continue
+    opat="${e#Bash(}"; opat="${opat%)}"
+    case "$opat" in *:\*) opat="${opat%:\*}*" ;; esac
+    for c in "$@"; do
+      # shellcheck disable=SC2053
+      [[ $c == $opat ]] && { echo "matches $e"; return; }
+    done
+  done < "$T/all.txt"
+}
+
+n=10
+for i in "${!pg_rule[@]}"; do
+  rule="${pg_rule[$i]}"; probe="${pg_cmd[$i]}"
+  if ! grep -Fxq -- "$rule" "$T/ask.txt"; then
+    SKIP "push-gate rule not in the settings' ask list: $rule"
+    continue
+  fi
+  why="$(unsafe_probe "$probe")"
+  if [ "$why" = EXISTS ]; then
+    INC "probe target exists, not run: $rule"
+    continue
+  elif [ -n "$why" ]; then
+    INC "probe not safe to run: $rule ($why)"
+    continue
+  fi
+  pn="$T/push$i.neg.out"; pr="$T/push$i.rule.out"
+  why="$(iso_problem "$rule" "$probe" "$probe > $pn 2>&1" "$probe > $pr 2>&1")"
+  if [ -n "$why" ]; then
+    INC "probe does not isolate its rule: $rule ($why)"
+    continue
+  fi
+  nn=$((n + 1)); rn=$((n + 2)); n=$rn
+  run_bash $nn "$N" "$probe > $pn 2>&1"
+  if [ ! -e "$pn" ]; then
+    INC "push-gate probe: with no rule the probe did not run (rc $rc), so its rule verdict is skipped: $rule"
+    show_tail $nn
+    continue
+  fi
+  run_bash $rn "$P" "$probe > $pr 2>&1"
+  if [ -e "$pr" ]; then
+    FAIL "push-gate rule did not stop: $rule"
+    show_tail $rn
+  elif [ $rc -ne 0 ]; then
+    INC "push-gate run exited $rc (124 is a timeout), so no verdict: $rule"
+    show_tail $rn
+  else
+    case "$(denied_bash $rn "$probe")" in
+      yes) OK "push-gate rule refused, denial recorded: $rule" ;;
+      no)  INC "push-gate probe did not run but no Bash denial recorded for it: $rule"; show_tail $rn ;;
+      *)   INC "result json has no usable permission_denials: $rule"; show_tail $rn ;;
+    esac
+  fi
+done
+
+# A Bash ask entry with no probe and no agent-file purpose: say so.
+while IFS= read -r e; do
+  case "$e" in *.claude/agents*) continue ;; esac
+  known=0
+  for r in "${pg_rule[@]}"; do [ "$r" = "$e" ] && known=1; done
+  [ $known -eq 0 ] && echo "info  Bash ask rule with no probe in this script: $e"
+done < "$T/ask.txt"
+
 [ $fail -ne 0 ] && exit 1
 [ $inconclusive -ne 0 ] && exit 2
-# A pass is recorded as "<claude version> <date>", so tools/check-repo.sh can
+# A pass is recorded as "<claude version> <date>", so a repo check can
 # tell when Claude Code has been updated since. Beside this script;
 # $PERMCHECK_LAST overrides the path, empty disables the write.
 last="${PERMCHECK_LAST-$(dirname "$0")/check-permissions.last}"

@@ -14,6 +14,9 @@ prints them together.
   --owner NAME                   a person's name that marks an item as owned
                                  (repeatable; case-insensitive)
 
+collect() is a library entry point for other tools (the maintainer tag needs
+a name passed in).
+
 An item is a bullet at column 0 with its indented continuation lines.
 "Untagged" is a word check: no trigger or owner word (trigger, owner,
 when, until, once, after, next, blocked, wait, need, or an --owner
@@ -32,6 +35,7 @@ import argparse
 import re
 import subprocess
 import sys
+import textwrap
 from pathlib import Path
 
 HEADING = re.compile(r"^(#{1,6})\s+(.*?)\s*#*\s*$")
@@ -47,6 +51,20 @@ STALE = re.compile(
     r"|\b(done|fixed|deployed|merged|closed|answered|dropped|deleted)\b"
     r"(?!\s+lines?\b)[^.;]{0,30}\b20\d\d-\d\d-\d\d"
     r"|\b20\d\d-\d\d-\d\d\b[^.;]{0,12}\b(done|fixed|deployed|merged)\b", re.I)
+def maintainer_owns(name):
+    """Pattern for a maintainer named as the owner or the trigger, not merely
+    as the one who decided: "Owner: Sam", "Trigger: Sam's next bench
+    session", "(Sam).", "needs Sam"; "Decided (Sam, 2026-11-09)" does not
+    match. None when no name is given, so nothing matches. collect() only."""
+    if not name:
+        return None
+    n = re.escape(name)
+    return re.compile(
+        rf"\bowners?\b[^.;]{{0,50}}?\b{n}\b|\btriggers?\b[^.;]{{0,50}}?\b{n}\b|\({n}\)"
+        r"|\b(?:left to|waiting (?:on|for)|waits? for|needs?|asks?|until|once"
+        rf"|after|when|before)\s+{n}\b|\b{n}'s (?:yes|go|ok|word|call|approval)", re.I)
+
+
 AGENT_LEAD = re.compile(r"^[-*+]\s+\**([a-z][a-z0-9-]+)\b")
 
 
@@ -97,7 +115,14 @@ def readmes(root, limits):
 
 def sections(text):
     """Yield the body lines of each Not done section, fences respected."""
-    lines = text.splitlines()
+    for _, body in sections_at(text):
+        yield body
+
+
+def sections_at(text, by_newline=False):
+    """Yield (index of the body's first line in the file, 0-based, body)."""
+    lines = ([l[:-1] if l.endswith("\r") else l for l in text.split("\n")]
+             if by_newline else text.splitlines())
     fence = False
     i = 0
     while i < len(lines):
@@ -108,6 +133,7 @@ def sections(text):
         if m and NOT_DONE.match(m.group(2)):
             level = len(m.group(1))
             body, i, inner = [], i + 1, False
+            first = i
             while i < len(lines):
                 l = lines[i]
                 if l.lstrip().startswith("```"):
@@ -121,7 +147,8 @@ def sections(text):
                 body.pop()
             while body and not body[0].strip():
                 body.pop(0)
-            yield body
+                first += 1
+            yield first, body
             continue
         i += 1
 
@@ -144,6 +171,61 @@ def items(body):
     for _, ls in out:
         while ls and not ls[-1].strip():
             ls.pop()
+    return out
+
+
+def walk(parts, names=frozenset(), owners=frozenset(), maintainer=None):
+    """Classify the parts of one section. Yields (kind, lines, flags) with
+    flags stale, untagged, maintainer; prose carries only stale. maintainer
+    is a name; without one the maintainer flag is never set."""
+    pat = maintainer_owns(maintainer)
+    mwords = words(maintainer) if maintainer else set()
+    group, gmaint = False, False
+    for kind, ls in parts:
+        stale = bool(STALE.search(" ".join(l.strip() for l in ls)))
+        if kind == "prose":
+            group = owned_group(ls[0], names | owners)
+            gmaint = bool(mwords) and mwords <= words(ls[0])
+            yield kind, ls, {"stale": stale, "untagged": False, "maintainer": False}
+            continue
+        maint = bool(pat and pat.search(" ".join(l.strip() for l in ls))) \
+            or (group and gmaint)
+        untagged = not group and not tagged(ls, names, owners)
+        yield kind, ls, {"stale": stale, "untagged": untagged, "maintainer": maint}
+
+
+def item_text(ls):
+    """The item as written: first-line bullet marker stripped, continuation
+    lines dedented."""
+    first = re.sub(r"^(?:[-*+]|\d+[.)])\s+", "", ls[0])
+    rest = textwrap.dedent("\n".join(ls[1:])).split("\n") if len(ls) > 1 else []
+    return "\n".join([first] + [l.rstrip() for l in rest])
+
+
+def collect(texts, names=frozenset(), owners=frozenset(), maintainer=None):
+    """Pure: no git, no file I/O, no printing. texts is [(readme_path, text)].
+    Returns one entry per README with a Not done section:
+    {"readme": path, "items": [{"text", "tag", "line"}]}. tag is stale, maintainer
+    (the item or the owner line above it names the maintainer; only with a
+    maintainer name), tagged (any other
+    trigger or owner word) or untagged, in that precedence; line is the
+    item's first line in the README, 1-based."""
+    out = []
+    for rel, text in texts:
+        found, its = False, []
+        for start, body in sections_at(text, True):
+            found, ptr = True, 0
+            for kind, ls, f in walk(items(body), names, owners, maintainer):
+                pos = body.index(ls[0], ptr)
+                ptr = pos + len(ls)
+                if kind != "item":
+                    continue
+                tag = ("stale" if f["stale"] else "maintainer" if f["maintainer"]
+                       else "untagged" if f["untagged"] else "tagged")
+                its.append({"text": item_text(ls), "tag": tag,
+                            "line": start + pos + 1})
+        if found:
+            out.append({"readme": rel, "items": its})
     return out
 
 
@@ -171,15 +253,8 @@ def main():
             if a.count:
                 continue
             if a.untagged or a.stale:
-                hits, group = [], False
-                for k, ls in parts:
-                    if a.stale:
-                        if STALE.search(" ".join(l.strip() for l in ls)):
-                            hits.append(ls)
-                    elif k == "prose":
-                        group = owned_group(ls[0], names | owners)
-                    elif not group and not tagged(ls, names, owners):
-                        hits.append(ls)
+                hits = [ls for _, ls, f in walk(parts, names, owners)
+                        if f["stale" if a.stale else "untagged"]]
                 if not hits:
                     continue
                 print(f"== {rel}  ({len(hits)} of {n})")

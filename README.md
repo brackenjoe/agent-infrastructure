@@ -227,8 +227,9 @@ wrong or missing for it, a correction is welcome
 Most rules are instructions the model is trusted to follow. These are
 enforced by something other than the model. The Claude Code rows were
 checked with `tools/check-permissions.sh` on versions from 2.1.289 to
-2.1.322 (last run 2026-11-11; its probes grew on 2026-11-04 and
-2026-11-08, and the current set has run on 2.1.319, 2.1.321 and 2.1.322)
+2.1.329 (last run 2026-11-20; its probes grew on 2026-11-04, 2026-11-08
+and 2026-11-20, when the push-gate rules joined, and the current set has
+run on 2.1.329)
 and against the
 [permissions](https://code.claude.com/docs/en/permissions) and
 [permission modes](https://code.claude.com/docs/en/permission-modes) docs,
@@ -243,7 +244,7 @@ read 2026-10-17.
 | The agent cannot read or write your keys, your shell files or your sudo | a Unix account of its own, homes `0750` | It keeps its own credentials. Reaching its terminals from your account is one sudoers line or an SSH rule, your choice ([the agent as its own user](docs/agent-account.md)) |
 | What the agent may run as root | the sudo allowlist in `/etc/sudoers.d` | For accidents, not a hostile agent: `apt-get install` by package name is one step from root by construction, the deploy targets' allowlists reach it in one step by design, and a regular expression that looks tight can let a verb through (four did here; the probes are in the file's header) |
 | The agent's git token reaches only the repositories it is scoped to | a fine-grained token on selected repositories | When a public repository is off the token, nothing on the server can publish there ([the GitHub side](docs/github-repo.md)) |
-| A push to a public GitHub repository needs the owner's approval on the command | publish-gates' pre-push hook, which runs the visibility check and scans the pushed commits for cross-references, with `core.hooksPath` set globally | For mistakes, not a wall: `--no-verify` (or an abbreviation git accepts, such as `--no-verif`), a repository's own `core.hooksPath` or `git -c` skips it, `gh` writes a repository without a push, and a GitHub remote behind an SSH host alias defined only in an ssh config that git is told to use (`core.sshCommand`, `GIT_SSH_COMMAND` with `-F`, or a `GIT_SSH` wrapper script) passes as not checked if the alias name holds only letters, digits, dots and dashes (any other name is refused as unknown unless approved). The hook resolves an alias with `ssh -G`, which reads only the default ssh config and answers with the alias's own name for one it does not know. When `ssh -G` itself fails, times out, is not found or prints no hostname, the host is unknown and the push is refused unless approved (since 2026-11-10; before that, an alias with a plain name passed as not checked). `Bash` ask rules prompt on the approval and the publish script's `--push` in auto-mode sessions (2.1.316 and 2.1.317; the owner, 2026-11-03), and one command each for `--no-veri`, `hooksPath` and `gh` prompted too (the owner, 2026-11-04); the other `gh` forms and `git commit -n` are not exercised, and `-n` has no rule. They are string matches: a variable or a mixed-case key hides the command, and no script checks them yet ([the GitHub side](docs/github-repo.md)) |
+| A push to a public GitHub repository needs the owner's approval on the command | publish-gates' pre-push hook, which runs the visibility check and scans the pushed commits for cross-references, with `core.hooksPath` set globally | For mistakes, not a wall: `--no-verify` (or an abbreviation git accepts, such as `--no-verif`), a repository's own `core.hooksPath` or `git -c` skips it, `gh` writes a repository without a push, and a GitHub remote behind an SSH host alias defined only in an ssh config that git is told to use (`core.sshCommand`, `GIT_SSH_COMMAND` with `-F`, or a `GIT_SSH` wrapper script) passes as not checked if the alias name holds only letters, digits, dots and dashes (any other name is refused as unknown unless approved). The hook resolves an alias with `ssh -G`, which reads only the default ssh config and answers with the alias's own name for one it does not know. When `ssh -G` itself fails, times out, is not found or prints no hostname, the host is unknown and the push is refused unless approved (since 2026-11-10; before that, an alias with a plain name passed as not checked). `Bash` ask rules prompt on the approval and the publish script's `--push` in auto-mode sessions (2.1.316 and 2.1.317; the owner, 2026-11-03), and every `--no-veri`, `hooksPath` and `gh` rule prompted too, one command each (the owner, 2026-11-04 and 2026-11-20); `git commit -n` has no rule. They are string matches: a variable or a mixed-case key hides the command; `tools/check-permissions.sh` probes each `--no-veri`, `hooksPath` and `gh` rule spelled as in its table (`pg_rule`) with a harmless command, headless, and names any other Bash ask rule it finds without probing it ([the GitHub side](docs/github-repo.md)) |
 | On the public repository, a session cannot create a branch, rewrite `main` or move a tag | rulesets with no bypass actors | read back through the API, not exercised: a test push would be a public act |
 | In the reference build: the agent server cannot reach the TAK server | Tailscale access rules | The web server can, and agents deploy to it; only the instruction to stop before a machine's ways in closes that path |
 | With your own machines: deploy targets hold no key back to the agent server | SSH: no key installed on the targets | |
@@ -360,8 +361,9 @@ user split moved them onto this table.
   `install-cloudflared-hardening.sh` with its test ([the web
   server](docs/web-server.md))
 - `tools/check-permissions.sh`: check the agent-file ask rule still holds,
-  in a throwaway repo, and whether anything stops a Bash write to an agent
-  file
+  in a throwaway repo, whether anything stops a Bash write to an agent
+  file, and that each push-gate Bash ask rule your settings carry refuses
+  a harmless probe
 - `tools/claude-hooks/agent-file-guard.py`, `tools/test-agent-file-guard.sh`:
   the PreToolUse hook that denies a Bash write to an agent file, and its
   offline test
