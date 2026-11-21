@@ -178,7 +178,8 @@ By kind:
   Without an OS sandbox nothing of the target runs, and every lead stays
   unconfirmed. The sandbox went live on 2026-11-02, once the owner
   installed the distribution's AppArmor profile for bwrap; target code
-  runs only after its selfcheck proves each of its 20 controls.
+  runs only after its selfcheck proves each of its controls (24 since
+  2026-11-21; [the harness](security-audit-harness.md)).
 - **It audited its own tooling.** A `quick` run on 2026-11-04 over the
   sandbox and the run script found the containment boundary sound and
   four low defects in the steps that set up and land a run: among them,

@@ -374,6 +374,10 @@ user split moved them onto this table.
   (pass `--owner NAME` for a person who owns items), and `--stale` items
   that read as already done. Word checks: it finds candidates, a person
   decides
+- `tools/security-audit-*` and `tools/test-security-audit-run.sh`: the harness that runs
+  cloudflare/security-audit-skill with the target's code under an
+  OS-enforced sandbox (bubblewrap and a systemd user scope), and the step
+  that promotes files out of an agent's scratch ([the harness](docs/security-audit-harness.md))
 - `.github/workflows/check.yml`: on every pull request, the public scan
   (publish-gates' scanner, pinned), gitleaks, relative links, and no edits
   to `tools/` or the hardening pair in `host/`
