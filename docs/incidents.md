@@ -1,14 +1,18 @@
 # Incidents, and the rules they produced
 
 [Back to the README](../README.md). Most rules in this setup exist because
-something went wrong first. These are thirty-three that produced a rule
-and two that have not yet, from ten weeks of running it (September to
-mid-November 2026), newest first. Security details are left out; the rule each
+something went wrong first. These are thirty-seven that produced a rule
+and two that have not yet, from eleven weeks of running it (September to
+late November 2026), newest first. Security details are left out; the rule each
 one produced is in the live files, and where the guide carries it, the
 row links there.
 
 | Date | What went wrong | How it was caught | Rule now |
 |---|---|---|---|
+| 2026-11-22 | A second agent runs on the agent server under the agent's account, inside a namespace sandbox that leaves the repository writable, since editing it is its job. The design relied on two controls: an approval before its commands ran, and `git diff` showing whatever it changed. Neither held. It could write code that programs outside the sandbox run and git does not track (a bytecode cache, gitignored tool checkouts, virtualenvs). It could write `.git` internals that hide an edit from `git status` and `git diff`. Its Bash ran with no approval prompt, and still does: the approval is not counted as a control. | Three sandboxed security audits in two days, then the owner trying the approval at the bench | The trees the unsandboxed side was found running code from (its own source, the tool checkouts, every virtualenv, git's config and hooks) are read-only inside the sandbox, and the sandbox's self-check holds a refused write for each; the repo check fails on four signs of a tampered `.git`. |
+| 2026-11-22 | The same sandbox shared the account's `~/.claude`. After the first audit, settings and agent files were read-only in it, but Claude Code loads more than those at start: rules, workflows, output styles and auto memory among them ([the `.claude` directory](https://code.claude.com/docs/en/claude-directory), read 2026-11-26). The second agent could write each of them, and the next session outside the sandbox would have loaded what it wrote. | The first two of those audits named it; what the CLI opens at start was then traced on 2.1.330 and read against the docs | The sandbox gets an empty `~/.claude` with the loaded files laid over it read-only, a login of its own, and auto memory off; the repo check fails if a loaded file that cannot be pinned that way appears. |
+| 2026-11-21 | Rehearsing a host install in a virtual machine, one step searched every file on the disk for a secret, to list where it had landed. The search was killed for lack of memory, twice. Its list came back empty, and an empty list is also what a clean disk gives. | A file known to hold the secret was missing from the list | A search for a secret passes only when a known positive is in its result. |
+| 2026-11-21 | A published tool's test claimed that a position never reaches the tool's output. It searched the output for the position's field names, so the same digits under another label would have passed. | A security audit of the published tools | The test searches for the value's digits, under any label. |
 | 2026-11-09 | Every part's README has a "Not done" list, and the rule for it (open items only, each with its trigger or owner) was a sentence. Of 214 items across the lists, a word check found 82 with no trigger or owner. Later, a read of all 168 then listed found lines already done, or done in part, and still there; the lists went from 168 items to 150. | A tool that prints every list together, then five read-only reviews, each finding rerun before a line moved | Whoever closes a line moves it to the part's changelog in the same commit, and never marks it done in place; finishing a job re-reads the part's list against what the job did; the report names each line moved, or "none"; the repo check warns on a line that records its own closing. |
 | 2026-11-08 | A voice session in auto mode was asked to add a line to an agent file. A hook refused its Bash write and pointed it to the Edit tool. The session had already run `cd .claude/agents`, and from there the ask rule `Edit(**/.claude/agents/**)` no longer matched, so the classifier approved the edit and nobody was asked. | The owner, testing that an approval reached him: the session said it needed approval and went ahead | The rule is anchored at the filesystem root, `Edit(//**/.claude/agents/**)`, which held after the same `cd` (2.1.318). `tools/check-permissions.sh` gained an edit-after-`cd` probe, and it fails against the unanchored rule. Measured afterwards on 2.1.319, a `cd` into a subdirectory takes unanchored deny rules out of reach too ([the README](../README.md#the-rules-and-what-enforces-them)). |
 | 2026-11-07 | The gates in front of every public push were audited three times in two days. The confirmed findings (9, 11 and 4) were nearly all one kind: a gate that exits 0 without having checked. The scanner printed `ok (N files)` over files it had not read; a commit that only changed a file's type was not scanned; a `.gitattributes` line hid a file from the secret scan; an SSH host alias or `github.com.` skipped the push gate without a message. The one medium was a different kind: the dependency scan could run code from the repository it was scanning. A cold review earlier the same day had found four gates of the same kind and missed these, and the self-tests passed over every finding of the first two runs. | A sandboxed security audit, run on the setup's own gates | A gate that could not check says so and does not exit 0; each fix lands with test cases shown to fail on the old code. The fixes are in [publish-gates](https://github.com/brackenjoe/publish-gates). |
@@ -45,7 +49,7 @@ row links there.
 | 2026-09-17 | A design for pushing missions to TAK had six defects, among them a followed redirect that would resend the client certificate. | A second-model review | Eleven new self-tests; every failure path fails closed ([TAK integration](tak-integration.md#fail-closed)). |
 | 2026-09-04 | An afternoon on a recovery watchdog, for a hang the box had never had, produced four successive wrong conclusions. A service reading `active` was taken as evidence it worked; the box hard-hung three minutes after the watchdog was armed. | Measuring the watchdog's timer, which never moved | Verify by exercising the thing, not by seeing that it started; check the base rate before building a mitigation. |
 
-## Four patterns
+## Five patterns
 
 1. **A claim from reasoning or a single negative, not a measurement:** the
    reachability claim, the predicted audit findings, the watchdog, the
@@ -62,7 +66,9 @@ row links there.
    and not the one the firmware ran, the permission check that probed only
    the file tools, the ask rule that matched one spelling, the deploy that
    counted failures and not skips, the audit landing that ran after a
-   failed check, the publish gates that exited 0 having read nothing.
+   failed check, the publish gates that exited 0 having read nothing, the
+   secret search that died and read as clean, the privacy test that
+   looked for a label and not the value.
 3. **Cost from routing, not capability:** the most expensive failure was not
    a wrong answer but the right work done by the wrong model.
 4. **An instruction, not a permission:** the builder's commit, the briefs
@@ -73,6 +79,10 @@ row links there.
    [what enforces which rule](../README.md#the-rules-and-what-enforces-them)
    is the short list of rules that are not like this; the user split
    moved the stop rule's paths onto it.
+5. **A boundary drawn around the agent, not around what the trusted side
+   runs or reads:** the sandbox that left writable the code and the git
+   state the unsandboxed side uses, the `~/.claude` it shared, and
+   earlier the root timer that ran a script out of the agent's checkout.
 
 The cheap, bounded builders checked the stronger orchestrator more often
 than the reverse, because their file lists made them measure before they

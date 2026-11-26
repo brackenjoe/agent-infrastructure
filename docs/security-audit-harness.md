@@ -154,6 +154,39 @@ returns the command's status with the memory note. Hitting the file-size
 limit gives 153 (death by `SIGXFSZ`), or the command's own `EFBIG` error if
 it ignores that signal, with no note.
 
+## What repeated runs taught
+
+From seven re-audits here between 2026-11-21 and 2026-11-23. The skill's
+method has a parent agent spawn reconnaissance agents, then hunters that
+look for defects, verifiers that reproduce each one, and a critic;
+`land` copies a finished run's records into the repository.
+
+- **Scope a re-audit from what earlier runs covered, not from a summary.**
+  Compare the file list with every landed run's `target_files`. A README
+  here said four batches had been audited, and one had never been in any
+  run's targets. An earlier run's own fixes had not been hunted either.
+- **A second run on one day needs its own landing name.** `setup` builds
+  the run id from the part, the date and a counter, and the counter
+  starts again once a run is torn down. Name each later landing yourself:
+  `land` refuses a directory that exists.
+- **The reproduction harness stays as it is.** One verifier wrote its fix
+  check over its own `harness.py`, and the promoted file no longer
+  matched its output. Hunters repeatedly ran the deciding check from a
+  second file, which is not promoted, so that check stood as a source
+  read. Say both in the briefs: the deciding run is `harness.py`, and a
+  fix check goes in a name that is not on the promotion list.
+- **A test written for an audit's fix goes into the next run's scope.**
+  One was a denylist where an allowlist belonged, and the next run
+  confirmed it.
+- **When a fix states an invariant, the next run checks every caller.**
+  One fix put "nothing changes the screen while an approval is pending"
+  in one function; the next run found a second path to the same sink.
+- **Read the verifier's fix, not the hunter's.** One hunter's fix would
+  have mislabelled the owner's own uses of the same operation; the
+  verifier found it.
+- **A budget of 10 covers one unit:** four reconnaissance agents, one
+  hunter, two verifiers and one critic, with two in reserve.
+
 ## The skill
 
 The skill is not published here. The run and briefs scripts read it from

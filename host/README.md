@@ -6,7 +6,12 @@ the Remote Control name, `claude` the agent's account. [The agent
 server](../docs/agent-server.md) and [the agent as its own
 user](../docs/agent-account.md) say why each exists. The unit here drops the
 live one's `network-online.target` lines, which do nothing in a user unit;
-the loop backs off instead. MIT, like the rest of the code here.
+the loop backs off instead. `failed-marker@.service` is a system unit:
+do not copy its `Protect*` and `Private*` lines into a user unit and
+count on them, since there some were accepted and not applied, and
+others stopped the unit from starting
+([the agent server](../docs/agent-server.md), lessons). MIT, like the
+rest of the code here.
 
 | File | Goes to | Does |
 |---|---|---|

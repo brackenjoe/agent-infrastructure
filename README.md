@@ -11,8 +11,8 @@ Unix user of its own, with a short list of what it may do as root.
 It scales from one cloud session with no server to a network of your own
 machines. It was written from the Claude Code setup Bracken Systems runs,
 and every practice here came from running it: the
-[incidents](docs/incidents.md) are thirty-five failures from ten weeks,
-thirty-three of them with the rule they produced.
+[incidents](docs/incidents.md) are thirty-nine failures from eleven weeks,
+thirty-seven of them with the rule they produced.
 [The reference build](docs/reference-build.md) is the setup they came
 from, in broad strokes, and why it is shaped that way. Codex is covered
 for the cloud path.
@@ -227,10 +227,10 @@ wrong or missing for it, a correction is welcome
 Most rules are instructions the model is trusted to follow. These are
 enforced by something other than the model. The Claude Code rows were
 checked with `tools/check-permissions.sh` on versions from 2.1.289 to
-2.1.329 (last run 2026-11-20; its probes grew on 2026-11-04, 2026-11-08
-and 2026-11-20, when the push-gate rules joined, and the current set has
-run on 2.1.329)
-and against the
+2.1.330. The last run was 2026-11-26, on 2.1.330. Its probes grew on
+2026-11-04, 2026-11-08, 2026-11-20 (the push-gate rules) and 2026-11-26
+(the loader paths), so the current set has run on 2.1.330 only. The rows
+were also read against the
 [permissions](https://code.claude.com/docs/en/permissions) and
 [permission modes](https://code.claude.com/docs/en/permission-modes) docs,
 read 2026-10-17.
@@ -238,6 +238,7 @@ read 2026-10-17.
 | Rule | Enforced by | Limits |
 |---|---|---|
 | Creating or editing an agent file asks you first | the ask rule `Edit(//**/.claude/agents/**)` in `.claude/settings.json` | Holds in every mode for Claude Code's file tools; after a Bash `cd`, measured in auto and bypassPermissions only (2.1.318); see below the table. It does not stop a Bash command that writes the file: on 2.1.318 `sed -i` and a heredoc both did, and only a hook that denies held (below). Spawning an agent never prompts: `Agent(...)` allow rules do nothing, and auto mode drops them |
+| Writing the other files Claude Code loads at start (`.claude/rules/`, `.claude/output-styles/`, `.claude/workflows/`) is refused in acceptEdits, and not in bypassPermissions | Claude Code's own protection of `.claude`, seen with empty settings; no rule here names these paths | Measured on 2.1.330 (2026-11-26), headless, one run each, Edit tool only. Headless, a refusal is what a prompt becomes; that an interactive session asks a person is not shown. In bypassPermissions all three were written. With the ask rule `Edit(//**/.claude/rules/**)` added, that path was refused and the other two were still written. Default mode, auto mode, the Write tool and Bash writes are not probed. `tools/check-permissions.sh` reports these rows and they change its exit status only when your settings name the path |
 | The builder cannot spawn agents; the reviewer cannot edit or spawn | `disallowedTools` in their frontmatter | Bash remains in both, so "never commit" and "nothing you run writes" are rules the files state, not walls |
 | Repo layout, index, links, captures, sudo source, idle worktrees | the repo check script | only when run |
 | No addresses, network names, private terms or credentials in a public push | publish-gates' `public-scan.sh`, then gitleaks | on every pull request here (public patterns only) and when run; does not replace reading the diff |
@@ -330,6 +331,20 @@ in `.claude/settings.json` as
 `starter/` ships the ask rule only, not the hook, so
 `tools/check-permissions.sh` reports the starter's Bash case as `OPEN`
 until you add the wiring. Edit agent files with the file tools.
+
+**Agent files are not the only files a session loads.** Claude Code also
+reads rules, output styles, workflows and auto memory at start
+([the `.claude` directory](https://code.claude.com/docs/en/claude-directory),
+read 2026-11-26). The ask rule above names agent files only. The table's
+row for those paths is what was measured: built-in protection refused
+them in acceptEdits, and in bypassPermissions nothing did. If your
+sessions run in bypassPermissions, add an ask rule per path in the
+agent-file rule's form, such as `Edit(//**/.claude/rules/**)`. That form
+was measured for `.claude/rules` only. `starter/` does not carry these
+rules. A second agent that shares the account needs a `~/.claude` of
+its own, holding only the files it must load, laid over read-only by
+something outside the model
+([incidents](docs/incidents.md), 2026-11-22).
 
 Cloud sessions pre-approve file edits in every mode, and the Protected
 paths section names no cloud exception (permission modes, read
