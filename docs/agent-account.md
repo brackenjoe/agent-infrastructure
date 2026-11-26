@@ -57,8 +57,11 @@ loginctl enable-linger claude           # its user units start at boot
 Then, as that user and at a terminal, once: run `claude` in the repository
 to accept its trust prompt (workspace trust is keyed by path in
 `~/.claude.json`, per user), and check `claude auth status`. The login file
-was copied here; `claude auth login` on a headless second user was not
-exercised.
+was copied here when the install was moved. `claude auth login`, run
+in an SSH terminal as the agent's account, was tried later (2026-11-26,
+Claude Code 2.1.330):
+it prints a URL to open on another device and asks for the code pasted
+back.
 
 The Remote Control unit from [the agent server](agent-server.md) runs
 under this account, with `%h` and `$HOME` in its paths and lingering on.
