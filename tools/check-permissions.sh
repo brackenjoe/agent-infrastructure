@@ -209,7 +209,7 @@
 # rule naming them (the agent-file rule, Bash ask rules and the Bash hook
 # present) all three were written; with the ask rule
 # `Edit(//**/.claude/rules/**)` added, that path was refused and the other two
-# written.
+# written; with the same rule for each of the three, all three were refused.
 # 10 model runs, plus 7 for the loader paths (4 if the acceptEdits control is
 # not edited; PERMCHECK_LOADERS=0: none), plus 2
 # per push-gate row whose rule is in the settings (the public starter: none, 17

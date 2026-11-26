@@ -238,7 +238,7 @@ read 2026-10-17.
 | Rule | Enforced by | Limits |
 |---|---|---|
 | Creating or editing an agent file asks you first | the ask rule `Edit(//**/.claude/agents/**)` in `.claude/settings.json` | Holds in every mode for Claude Code's file tools; after a Bash `cd`, measured in auto and bypassPermissions only (2.1.318); see below the table. It does not stop a Bash command that writes the file: on 2.1.318 `sed -i` and a heredoc both did, and only a hook that denies held (below). Spawning an agent never prompts: `Agent(...)` allow rules do nothing, and auto mode drops them |
-| Writing the other files Claude Code loads at start (`.claude/rules/`, `.claude/output-styles/`, `.claude/workflows/`) is refused in acceptEdits, and not in bypassPermissions | Claude Code's own protection of `.claude`, seen with empty settings; no rule here names these paths | Measured on 2.1.330 (2026-11-26), headless, one run each, Edit tool only. Headless, a refusal is what a prompt becomes; that an interactive session asks a person is not shown. In bypassPermissions all three were written. With the ask rule `Edit(//**/.claude/rules/**)` added, that path was refused and the other two were still written. Default mode, auto mode, the Write tool and Bash writes are not probed. `tools/check-permissions.sh` reports these rows and they change its exit status only when your settings name the path |
+| Writing the other files Claude Code loads at start (`.claude/rules/`, `.claude/output-styles/`, `.claude/workflows/`) is refused in acceptEdits, and in bypassPermissions only once an ask rule names each path | Claude Code's own protection of `.claude` in acceptEdits, seen with empty settings; in bypassPermissions, an ask rule per path, such as `Edit(//**/.claude/rules/**)` | Measured on 2.1.330 (2026-11-26), headless, one run each, Edit tool only. Headless, a refusal is what a prompt becomes; that an interactive session asks a person is not shown. In bypassPermissions with no such rule all three were written. With the rule for `.claude/rules` alone, that path was refused and the other two were still written. With all three rules, all three were refused. Default mode, auto mode, the Write tool and Bash writes are not probed. `starter/` does not carry the three rules. `tools/check-permissions.sh` reports these rows and they change its exit status only when your settings name the path |
 | The builder cannot spawn agents; the reviewer cannot edit or spawn | `disallowedTools` in their frontmatter | Bash remains in both, so "never commit" and "nothing you run writes" are rules the files state, not walls |
 | Repo layout, index, links, captures, sudo source, idle worktrees | the repo check script | only when run |
 | No addresses, network names, private terms or credentials in a public push | publish-gates' `public-scan.sh`, then gitleaks | on every pull request here (public patterns only) and when run; does not replace reading the diff |
@@ -337,11 +337,16 @@ reads rules, output styles, workflows and auto memory at start
 ([the `.claude` directory](https://code.claude.com/docs/en/claude-directory),
 read 2026-11-26). The ask rule above names agent files only. The table's
 row for those paths is what was measured: built-in protection refused
-them in acceptEdits, and in bypassPermissions nothing did. If your
-sessions run in bypassPermissions, add an ask rule per path in the
-agent-file rule's form, such as `Edit(//**/.claude/rules/**)`. That form
-was measured for `.claude/rules` only. `starter/` does not carry these
-rules. A second agent that shares the account needs a `~/.claude` of
+them in acceptEdits, and in bypassPermissions nothing did until a rule
+named the path. If your sessions run in bypassPermissions, add an ask
+rule per path in the agent-file rule's form:
+`Edit(//**/.claude/rules/**)`, `Edit(//**/.claude/output-styles/**)` and
+`Edit(//**/.claude/workflows/**)`. The setup this guide was written from
+added them on 2026-11-26. With them, an Edit of each path in
+bypassPermissions was refused (2.1.330, headless). They name the Edit
+tool. Bash writes to these paths were not probed, and for agent files
+the same form of rule did not stop one (2.1.318). `starter/` does not
+carry these rules. A second agent that shares the account needs a `~/.claude` of
 its own, holding only the files it must load, laid over read-only by
 something outside the model
 ([incidents](docs/incidents.md), 2026-11-22).
